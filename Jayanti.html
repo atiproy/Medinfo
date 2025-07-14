@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Clinical Dashboard: Ms. Jayanti Roy</title>
+    <!-- Chosen Palette: Serene Neutrals & Soft Accents -->
+    <!-- Application Structure Plan: A top-down, narrative-driven dashboard. It starts with a high-level summary, then uses a visual timeline to detail the core story of Aortic Stenosis progression. It then groups information into thematic sections (Cardiovascular Health, Metabolic Profile, Treatment Plan) rather than mirroring the source report's structure. This thematic approach is more user-friendly as it consolidates related data from different parts of the source report (vitals, labs, imaging) into coherent, understandable modules. The user flow is a guided vertical scroll, supported by a sticky navigation bar for quick access, making exploration intuitive. -->
+    <!-- Visualization & Content Choices: 
+        - Patient Overview: (Goal: Inform) -> HTML Key Metric cards and text for data complexities (gender, MRNs, referring consultant). Justification: Fast, scannable summary and crucial data integrity points.
+        - AS Progression: (Goal: Change) -> HTML/CSS Timeline with embedded quantitative Echo data (Peak/Mean Gradient, Velocity). Justification: Best for showing a chronological narrative and escalation with supporting objective measures.
+        - Vital Signs: (Goal: Change/Compare) -> Line Chart (Chart.js) for HR and BP trends. Textual summary for other vitals (RR, SpO2, Pain, BMI etc.). Justification: Ideal for tracking multiple vital trends over time and providing comprehensive context.
+        - CT Coronary Angiogram: (Goal: Inform/Compare) -> Donut Chart (Chart.js) for Calcium Score distribution. Textual summary for findings (CAD-RADS-1/P2, myocardial bridging). Justification: Excellent for showing part-to-whole composition of plaque location and providing detailed imaging insights.
+        - Echo Color Doppler Findings: (Goal: Inform) -> Textual summary card. Justification: Summarizes complex imaging results concisely (LVH, Diastolic Dysfunction, Mitral Regurgitation).
+        - Blood Glucose & Anemia: (Goal: Compare) -> Bar Charts (Chart.js). Justification: Directly compares patient values to reference ranges, making abnormalities clear. Text for implications.
+        - Other Labs (Lipids, Renal, Liver): (Goal: Inform) -> Textual summary cards. Justification: Efficiently conveys normal findings without needing complex charts, maintaining focus on abnormalities.
+        - Unresolved Diagnosis: (Goal: Inform) -> Prominent text callout. Justification: Highlights a critical missing piece of information for follow-up.
+        - Medication Regimen: (Goal: Inform/Change) -> Detailed text summary with bullet points for each prescription, highlighting changes. Justification: Clearly outlines therapeutic adjustments over time.
+        - Treatment Plan: (Goal: Organize) -> HTML/CSS Flowchart with detailed pre-surgical requirements. Justification: Simple, clear visual representation of a process.
+        - Library/Method: All charts use Chart.js on Canvas. All diagrams and textual summaries use structured HTML/CSS with Tailwind.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa; /* Light Gray */
+            color: #343a40; /* Dark Gray */
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+        @media (max-width: 768px) {
+            .chart-container {
+                height: 300px;
+            }
+        }
+        .nav-item {
+            transition: all 0.2s ease-in-out;
+        }
+        .timeline-item {
+            position: relative;
+            padding-bottom: 2.5rem;
+            padding-left: 2.5rem;
+        }
+        .timeline-item:last-child {
+            padding-bottom: 0;
+        }
+        .timeline-marker {
+            position: absolute;
+            left: 0;
+            top: 0.25rem;
+            height: 1.5rem;
+            width: 1.5rem;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+        .timeline-connector {
+            position: absolute;
+            left: 0.6875rem;
+            top: 0.25rem;
+            bottom: -0.25rem;
+            width: 2px;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-4 lg:px-6">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <span class="text-xl font-bold text-[#005f73]">Clinical Dashboard</span>
+                </div>
+                <div class="hidden md:flex items-center space-x-1">
+                    <a href="#summary" class="nav-item text-gray-600 hover:text-white hover:bg-[#0a9396] px-3 py-2 rounded-md text-sm font-medium">Summary</a>
+                    <a href="#timeline" class="nav-item text-gray-600 hover:text-white hover:bg-[#0a9396] px-3 py-2 rounded-md text-sm font-medium">Timeline</a>
+                    <a href="#cardiac" class="nav-item text-gray-600 hover:text-white hover:bg-[#0a9396] px-3 py-2 rounded-md text-sm font-medium">Cardiac Health</a>
+                    <a href="#labs" class="nav-item text-gray-600 hover:text-white hover:bg-[#0a9396] px-3 py-2 rounded-md text-sm font-medium">Lab Insights</a>
+                    <a href="#unresolved" class="nav-item text-gray-600 hover:text-white hover:bg-[#0a9396] px-3 py-2 rounded-md text-sm font-medium">Unresolved</a>
+                    <a href="#meds" class="nav-item text-gray-600 hover:text-white hover:bg-[#0a9396] px-3 py-2 rounded-md text-sm font-medium">Medications</a>
+                    <a href="#plan" class="nav-item text-gray-600 hover:text-white hover:bg-[#0a9396] px-3 py-2 rounded-md text-sm font-medium">Treatment Plan</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto p-4 md:p-8">
+        
+        <section id="summary" class="mb-12">
+            <div class="text-center mb-8">
+                <h1 class="text-4xl md:text-5xl font-bold text-[#001219]">Ms. Jayanti Roy</h1>
+                <p class="text-lg text-gray-600 mt-2">An Interactive Clinical Summary (Jan - Jun 2025)</p>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+                <h2 class="text-2xl font-bold text-[#005f73] mb-4">Patient Overview</h2>
+                <p class="text-gray-600 mb-6">This dashboard synthesizes medical records for Ms. Jayanti Roy, a 56-year-old female, highlighting a rapid progression of Aortic Stenosis alongside other chronic conditions. The data reveals key health metrics and a clear path toward surgical intervention. Noted comorbidities include Hypertension, Ischemic Heart Disease (IHD), Anemia, Pre-diabetes, and a provisional diagnosis of Cushing Syndrome.</p>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center mb-6">
+                    <div class="bg-blue-50 p-4 rounded-lg">
+                        <div class="text-4xl font-bold text-[#0a9396]">56</div>
+                        <p class="text-sm font-semibold text-gray-600 mt-1">Years Old</p>
+                    </div>
+                    <div class="bg-orange-50 p-4 rounded-lg">
+                        <div class="text-4xl font-bold text-[#ee9b00]">32.5</div>
+                        <p class="text-sm font-semibold text-gray-600 mt-1">Avg. BMI (Obese)</p>
+                    </div>
+                    <div class="bg-red-50 p-4 rounded-lg">
+                        <div class="text-4xl font-bold text-[#ae2012]">104</div>
+                        <p class="text-sm font-semibold text-gray-600 mt-1">Avg. Heart Rate</p>
+                    </div>
+                    <div class="bg-purple-50 p-4 rounded-lg">
+                        <div class="text-4xl font-bold text-[#9b2226]">5+</div>
+                        <p class="text-sm font-semibold text-gray-600 mt-1">Key Diagnoses</p>
+                    </div>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4">
+                    <h3 class="font-bold text-lg text-[#005f73] mb-2">Referring Consultant:</h3>
+                    <p class="text-sm text-gray-700">Dr. Kuntal Bhattacharyya (CARDIOLOGY - ADULT)</p>
+                    <h3 class="font-bold text-lg text-[#005f73] mt-4 mb-2">Data Integrity Notes:</h3>
+                    <ul class="list-disc list-inside text-sm text-gray-700 space-y-1">
+                        <li>Patient identified as "FEMALE" across most reports, but one (Jan 17) incorrectly states "MALE".</li>
+                        <li>Primary MRN: 17510001327144 (Narayana Health). Other IDs: 3590A25, RGH/260625/0133 (Ruby General Hospital).</li>
+                        <li>This highlights the need for robust patient matching in AI systems.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section id="timeline" class="mb-12">
+            <h2 class="text-3xl font-bold mb-2 text-center text-[#005f73]">The Core Narrative: A 5-Month Progression</h2>
+            <p class="text-center text-gray-600 mb-8 max-w-3xl mx-auto">Ms. Roy's condition evolved rapidly over five months. This timeline tracks the journey from an initial finding of moderate aortic stenosis to a definitive diagnosis of a severe condition requiring surgery.</p>
+            <div class="relative border-l-2 border-[#94d2bd] ml-3 md:ml-0">
+                <div class="mb-10 ml-6 relative timeline-item">
+                    <span class="absolute flex items-center justify-center w-6 h-6 bg-[#e9d8a6] rounded-full -left-9 ring-4 ring-white timeline-marker"></span>
+                    <div class="timeline-connector bg-[#94d2bd]"></div>
+                    <h3 class="flex items-center mb-1 text-lg font-semibold text-gray-900">Jan 9: Initial Cardiac Consultation</h3>
+                    <time class="block mb-2 text-sm font-normal leading-none text-gray-500">Dr. Kuntal Bhattacharyya, Narayana Health</time>
+                    <p class="text-base font-normal text-gray-600">Diagnoses recorded: Provisional Cushing syndrome, Final Hypertension, Final Ischemic Heart Disease (IHD - mcad). Patient presents with complaints of chest pain and dyspnea.</p>
+                </div>
+                <div class="mb-10 ml-6 relative timeline-item">
+                    <span class="absolute flex items-center justify-center w-6 h-6 bg-[#ee9b00] rounded-full -left-9 ring-4 ring-white timeline-marker"></span>
+                    <div class="timeline-connector bg-[#94d2bd]"></div>
+                    <h3 class="text-lg font-semibold text-gray-900">Jan 13: Comprehensive Investigations</h3>
+                    <time class="block mb-2 text-sm font-normal leading-none text-gray-500">Narayana Health Lab & Radiology</time>
+                    <p class="text-base font-normal text-gray-600">Extensive lab tests (FBG, PPBG, CBC, Lipid, Renal, Liver) and CT Coronary Angiogram performed. CT shows Minor CAD (Total Calcium Score 134). Lab work reveals pre-diabetes and microcytic anemia.</p>
+                </div>
+                <div class="mb-10 ml-6 relative timeline-item">
+                    <span class="absolute flex items-center justify-center w-6 h-6 bg-[#ae2012] rounded-full -left-9 ring-4 ring-white timeline-marker"></span>
+                    <div class="timeline-connector bg-[#94d2bd]"></div>
+                    <h3 class="text-lg font-semibold text-gray-900">Jan 17: First Ruby Hospital Consultation</h3>
+                    <time class="block mb-2 text-sm font-normal leading-none text-gray-500">Dr. Tanmoy Majee, Ruby General Hospital</time>
+                    <p class="text-base font-normal text-gray-600">Chief complaints: <span class="font-bold text-[#ae2012]">Moderate Aortic Stenosis (MOD AS)</span>, IHD, Anemia, Hypertension. A comprehensive medication regimen is initiated to manage these conditions.</p>
+                </div>
+                <div class="mb-10 ml-6 relative timeline-item">
+                    <span class="absolute flex items-center justify-center w-6 h-6 bg-[#0a9396] rounded-full -left-9 ring-4 ring-white timeline-marker"></span>
+                    <div class="timeline-connector bg-[#94d2bd]"></div>
+                    <h3 class="text-lg font-semibold text-gray-900">June 24: Significant Progression & Echo-Doppler</h3>
+                    <time class="block mb-2 text-sm font-normal leading-none text-gray-500">Dr. Kuntal Bhattacharyya, Narayana Health</time>
+                    <p class="text-base font-normal text-gray-600">Diagnosis updated to <span class="font-bold text-[#0a9396]">"moderate to severe AS"</span>. Echo Color Doppler confirms severity:</p>
+                    <ul class="list-disc list-inside text-sm text-gray-700 mt-2 space-y-1">
+                        <li>Peak Pressure Gradient: <span class="font-semibold">71 mmHg</span></li>
+                        <li>Mean Pressure Gradient: <span class="font-semibold">47 mmHg</span></li>
+                        <li>Velocity: <span class="font-semibold">4.22 m/s</span></li>
+                        <li>Aortic Valve Area (AVA): Calculated at ~0.8 cm², confirming severe stenosis.</li>
+                    </ul>
+                    <p class="text-base font-normal text-gray-600 mt-2">SAVR referral made. Medications revised to optimize pre-surgical condition.</p>
+                </div>
+                <div class="ml-6 relative timeline-item">
+                    <span class="absolute flex items-center justify-center w-6 h-6 bg-[#9b2226] rounded-full -left-9 ring-4 ring-white timeline-marker"></span>
+                    <h3 class="text-lg font-semibold text-gray-900">June 26: Surgical Referral & Pre-Op Planning</h3>
+                    <time class="block mb-2 text-sm font-normal leading-none text-gray-500">Dr. Sankhadip Pramanik (CTVS), Ruby General Hospital</time>
+                    <p class="text-base font-normal text-gray-600">Patient noted as <span class="font-bold text-[#9b2226]">"KNOWN CASE OF SEVERE AS."</span> Pre-surgical profile advised for Aortic Valve Replacement (AVR) with a tissue valve, chosen for its durability and lower long-term anticoagulation needs.</p>
+                </div>
+            </div>
+        </section>
+        
+        <section id="cardiac" class="mb-12">
+            <h2 class="text-3xl font-bold mb-8 text-center text-[#005f73]">Cardiovascular Health Deep Dive</h2>
+            <p class="text-center text-gray-600 mb-8 max-w-3xl mx-auto">Beyond Aortic Stenosis, her profile includes persistent tachycardia, fluctuating blood pressure, and minor Coronary Artery Disease, all contributing to overall cardiac strain. Recent Echo findings provide critical structural and functional details.</p>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+                    <h3 class="text-xl font-bold text-center mb-1 text-[#005f73]">Vital Signs Trends</h3>
+                    <p class="text-center text-sm text-gray-600 mb-4">Tracking heart rate and blood pressure across consultations.</p>
+                    <div class="chart-container">
+                        <canvas id="vitalsChart"></canvas>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 mt-4">
+                        <h4 class="font-bold text-base text-[#005f73] mb-1">Other Key Vitals:</h4>
+                        <ul class="list-disc list-inside text-sm text-gray-700 space-y-1">
+                            <li>Respiratory Rate: 18-22 /min (Normal range)</li>
+                            <li>SpO2: 96-99% (Room air, indicating good oxygen saturation)</li>
+                            <li>Pain Score (June 24): 1 (LEG), suggesting minimal non-cardiac pain.</li>
+                            <li>MEWS Score (June 24): 2 (Low risk)</li>
+                            <li>Conscious Level: Alert and oriented.</li>
+                            <li>Fall Score: Low (0-24), indicating low risk of falls.</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+                    <h3 class="text-xl font-bold text-center mb-1 text-[#005f73]">Coronary Artery Calcium Score (Jan 13)</h3>
+                    <p class="text-center text-sm text-gray-600 mb-4">A CT angiogram revealed minor CAD, with calcification predominantly in the LAD artery.</p>
+                    <div class="chart-container">
+                        <canvas id="calciumScoreChart"></canvas>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 mt-4">
+                        <h4 class="font-bold text-base text-[#005f73] mb-1">CT Angiogram Findings:</h4>
+                        <ul class="list-disc list-inside text-sm text-gray-700 space-y-1">
+                            <li>Dominance: Right dominant coronary circulation.</li>
+                            <li>Anomalous Origins/Course: Nil.</li>
+                            <li>Left Main: Normal caliber and course.</li>
+                            <li>LAD: Minor calcific plaques (proximal), myocardial bridging (mid-segment) causing mild systolic compression.</li>
+                            <li>Overall: Minor CAD (CAD-RADS-1/P2), not hemodynamically significant.</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="lg:col-span-2 bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+                    <h3 class="text-xl font-bold text-center mb-1 text-[#005f73]">Echo Color Doppler Findings (June 24)</h3>
+                    <p class="text-center text-sm text-gray-600 mb-4">Detailed assessment of cardiac structure and function, confirming severe Aortic Stenosis.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                            <h4 class="font-bold text-base text-[#005f73] mb-1">Key Diagnoses:</h4>
+                            <ul class="list-disc list-inside text-sm text-gray-700 space-y-1">
+                                <li>Calcific Aortic Valve Disease with thickened, doming leaflets.</li>
+                                <li>Severe Aortic Stenosis (No significant Aortic Regurgitation).</li>
+                                <li>Concentric Left Ventricular Hypertrophy (LVH) - a response to pressure overload.</li>
+                                <li>Good LV Systolic Function (LVEF 64%) - heart muscle is still pumping strongly.</li>
+                                <li>Grade II Diastolic Dysfunction - impaired ventricular relaxation.</li>
+                                <li>Mild Mitral Regurgitation due to Mitral Annular Calcification.</li>
+                            </ul>
+                        </div>
+                        <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                            <h4 class="font-bold text-base text-[#005f73] mb-1">Valvular & Functional Measurements:</h4>
+                            <ul class="list-disc list-inside text-sm text-gray-700 space-y-1">
+                                <li>Aortic Valve Peak Gradient: 71 mmHg</li>
+                                <li>Aortic Valve Mean Gradient: 47 mmHg</li>
+                                <li>Aortic Valve Velocity: 4.22 m/s</li>
+                                <li>Aortic Valve Area (AVA): ~0.8 cm²</li>
+                                <li>Mitral Regurgitation Velocity: 1.41 m/s</li>
+                                <li>TAPSE (RV Function): 20mm (Indicates normal right ventricular function).</li>
+                                <li>No pericardial effusion or intracardiac mass.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="labs" class="mb-12">
+            <h2 class="text-3xl font-bold mb-8 text-center text-[#005f73]">Metabolic & Hematologic Insights</h2>
+            <p class="text-center text-gray-600 mb-8 max-w-3xl mx-auto">Lab tests from January 13 revealed key conditions—pre-diabetes and anemia—alongside normal lipid, renal, and liver profiles.</p>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+                     <h3 class="text-xl font-bold text-center mb-1 text-[#005f73]">Pre-Diabetic Blood Glucose (Jan 13)</h3>
+                    <p class="text-center text-sm text-gray-600 mb-4">Elevated glucose levels increase long-term cardiac risk.</p>
+                    <div class="chart-container">
+                        <canvas id="glucoseChart"></canvas>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 mt-4">
+                        <h4 class="font-bold text-base text-[#005f73] mb-1">Implications:</h4>
+                        <ul class="list-disc list-inside text-sm text-gray-700 space-y-1">
+                            <li>FBG: 109 mg/dL (Normal: 70-99)</li>
+                            <li>PPBG: 164 mg/dL (Normal: 70-139)</li>
+                            <li>Both values fall within the ADA "Pre-diabetes" range.</li>
+                            <li>Indicates impaired glucose metabolism and increased risk of Type 2 Diabetes and cardiovascular complications, important for surgical risk assessment.</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+                    <h3 class="text-xl font-bold text-center mb-1 text-[#005f73]">Microcytic Anemia Indicators (Jan 13)</h3>
+                    <p class="text-center text-sm text-gray-600 mb-4">Low red blood cell counts reduce oxygen delivery, increasing heart workload.</p>
+                    <div class="chart-container">
+                        <canvas id="anemiaChart"></canvas>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 mt-4">
+                        <h4 class="font-bold text-base text-[#005f73] mb-1">Key Findings:</h4>
+                        <ul class="list-disc list-inside text-sm text-gray-700 space-y-1">
+                            <li>Hemoglobin: 9.0 g/dL (Low)</li>
+                            <li>RBC Count: 3.40 millions/µL (Low)</li>
+                            <li>PCV/Hematocrit: 27.6% (Low)</li>
+                            <li>MCV: 81.2 fL (Low), MCH: 26.6 pg (Low) - indicative of microcytic hypochromic anemia.</li>
+                            <li>RDW: 16.5% (High) - suggests variability in RBC size, common in iron deficiency.</li>
+                            <li>Addressed with Ferric Pyrophosphate+Vitamins+Folic Acid (Sederom). Correcting anemia is crucial before surgery.</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+                        <h3 class="text-xl font-bold text-center mb-1 text-[#005f73]">Normal Lipid Profile (Jan 13)</h3>
+                        <p class="text-center text-sm text-gray-600 mb-4">Cholesterol levels are well-managed, a positive finding amidst other risk factors.</p>
+                        <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                            <ul class="list-disc list-inside text-sm text-gray-700 space-y-1">
+                                <li>Total Cholesterol: 129 mg/dL (Desirable: < 200)</li>
+                                <li>Triglycerides: 142 mg/dL (Normal: < 150)</li>
+                                <li>HDL Cholesterol: 54 mg/dL (Normal: 40-60)</li>
+                                <li>LDL Cholesterol: 48.9 mg/dL (Optimal: < 100)</li>
+                                <li>VLDL Cholesterol: 28.4 mg/dL (Normal: 0-40)</li>
+                                <li>Cholesterol/HDL Ratio: 2.4</li>
+                                <li>Likely effectively managed by Atorvastatin (Storvas).</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+                        <h3 class="text-xl font-bold text-center mb-1 text-[#005f73]">Normal Renal & Liver Function (Jan 13)</h3>
+                        <p class="text-center text-sm text-gray-600 mb-4">Kidney and liver functions are within normal physiological ranges.</p>
+                        <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                            <h4 class="font-bold text-base text-[#005f73] mb-1">Key Markers:</h4>
+                            <ul class="list-disc list-inside text-sm text-gray-700 space-y-1">
+                                <li>Serum Creatinine: 0.87 mg/dL (eGFR 67.4)</li>
+                                <li>Blood Urea Nitrogen (BUN): 9.91 mg/dL</li>
+                                <li>Serum Sodium: 139 mmol/L, Serum Potassium: 5.09 mmol/L</li>
+                                <li>Bilirubin (Total/Conjugated), Total Protein, Albumin, Globulin, AST, ALT, ALP, GGT: All normal.</li>
+                                <li>This confirms good organ function, a positive prognostic factor for surgery.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="unresolved" class="mb-12">
+            <h2 class="text-3xl font-bold mb-8 text-center text-[#005f73]">Unresolved Diagnostic Questions</h2>
+            <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-200 text-center">
+                <div class="text-5xl mb-4">❓</div>
+                <h3 class="text-xl font-bold text-[#ae2012] mb-2">Provisional Cushing Syndrome</h3>
+                <p class="text-gray-700 max-w-2xl mx-auto">A provisional diagnosis of "Cushing syndrome, Primary, ? EXOGENOUS" was made on January 9, 2025. No subsequent reports provide follow-up, confirmation, or refutation of this diagnosis.</p>
+                <p class="text-gray-700 max-w-2xl mx-auto mt-2 font-semibold">This represents a critical unanswered question, as Cushing syndrome can significantly impact hypertension, obesity, diabetes risk, and overall cardiovascular health, all relevant to Ms. Roy's profile. Clarification is needed to rule out an underlying endocrine cause for her comorbidities.</p>
+            </div>
+        </section>
+
+        <section id="meds" class="mb-12">
+            <h2 class="text-3xl font-bold mb-8 text-center text-[#005f73]">Medication Regimen Overview</h2>
+            <p class="text-center text-gray-600 mb-8 max-w-3xl mx-auto">Ms. Roy's medication regimen shows adaptive management of her chronic conditions, with notable adjustments over time, particularly for cardiovascular drugs.</p>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+                    <h3 class="text-xl font-bold text-[#005f73] mb-4">January 17, 2025 (Dr. Tanmoy Majee)</h3>
+                    <ul class="list-disc list-inside text-gray-700 space-y-2">
+                        <li>**FEBURIC-40:** Once daily, after dinner. (For hyperuricemia/gout)</li>
+                        <li>**TELSAR 40MG TAB.:** Once daily, 8:00 PM. (Telmisartan for Hypertension)</li>
+                        <li>**SEDEROM CAP:** Once daily, after lunch, for 28 days. (Iron/Vitamin for Anemia)</li>
+                        <li>**TELEKAST L 10/5MG TAB 15 PS:** Once daily, 5:00 PM. (Antihistamine/Leukotriene inhibitor)</li>
+                        <li>**NEXPRO RD 40MG CAP:** Once daily, before breakfast. (Esomeprazole for gastric protection)</li>
+                        <li>**KORANDIL 5MG TAB:** Twice daily, after breakfast and dinner. (Nicorandil for Angina/IHD)</li>
+                        <li>**STORVAS 20MG.TAB TAB (Er):** Once daily, after dinner. (Atorvastatin for Cholesterol)</li>
+                        <li>**CONCOR COR 2.5MG TAB 10 PS:** Once daily, after breakfast. (Bisoprolol, Beta-blocker for cardiac conditions)</li>
+                    </ul>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+                    <h3 class="text-xl font-bold text-[#005f73] mb-4">June 24, 2025 (Dr. Kuntal Bhattacharyya)</h3>
+                    <ul class="list-disc list-inside text-gray-700 space-y-2">
+                        <li>**ATORVASTATIN-TABLET-10MG-STORVAS:** Once daily, after dinner. <span class="font-semibold text-[#ae2012]">(Dosage reduced from 20mg)</span></li>
+                        <li>**TELMISARTAN-TABLET-20MG-TELMA:** Once daily, 8 AM. <span class="font-semibold text-[#ae2012]">(Dosage reduced from 40mg)</span></li>
+                        <li>**DILTIAZEM HCL-TABLET-30MG-DILZEM:** Once daily, 10 AM. <span class="font-semibold text-[#0a9396]">(New medication - Calcium channel blocker for BP/HR control)</span></li>
+                        <li>**FEBUXOSTAT-TABLET-40MG-FEBURIC:** Once daily, 10 AM. (Consistent)</li>
+                        <li>**BUDESONIDE+FORMOTEROL FUMARATE-INHALER-200MCG+6MCG-FORACORT:** Twice daily, 2 puffs. <span class="font-semibold text-[#0a9396]">(New medication, likely for respiratory symptoms like dyspnea)</span></li>
+                        <li>**FERRIC PYROPHOSPHATE+VITAMINS+FOLIC ACID-TABLET-.-SEDEROM:** Once daily, after lunch. (Consistent)</li>
+                        <li>**ESOMEPRAZOLE-TABLET-40MG-NEXPRO:** Once daily, before breakfast. (Consistent)</li>
+                        <li><span class="font-semibold text-[#ae2012]">Discontinued:</span> Korandil, Concor Cor. Diltiazem likely replaced Concor Cor for rate control.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section id="plan" class="mb-12">
+            <h2 class="text-3xl font-bold mb-8 text-center text-[#005f73]">The Path Forward: Treatment Plan</h2>
+            <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+                 <p class="text-center text-gray-600 mb-8">The clinical pathway has shifted from routine management to active preparation for major cardiac surgery. This flowchart outlines the recommended steps.</p>
+                <div class="flex flex-col md:flex-row items-stretch justify-center space-y-4 md:space-y-0 md:space-x-4">
+                    <div class="flex-1 text-center p-4 border-2 border-[#0a9396] rounded-lg bg-blue-50/50 flex flex-col justify-center">
+                        <div class="text-4xl mb-2">🩺</div>
+                        <h4 class="font-bold text-lg text-[#005f73]">Diagnosis</h4>
+                        <p class="text-sm text-gray-700">Severe Calcific Aortic Stenosis confirmed by Echo-Doppler.</p>
+                    </div>
+                    <div class="flex items-center justify-center text-2xl text-gray-400 font-sans transform rotate-90 md:rotate-0">→</div>
+                    <div class="flex-1 text-center p-4 border-2 border-[#94d2bd] rounded-lg bg-green-50/50 flex flex-col justify-center">
+                        <div class="text-4xl mb-2"➡️</div>
+                        <h4 class="font-bold text-lg text-[#005f73]">Referral</h4>
+                        <p class="text-sm text-gray-700">Referred to CTVS for Surgical Aortic Valve Replacement (SAVR).</p>
+                    </div>
+                    <div class="flex items-center justify-center text-2xl text-gray-400 font-sans transform rotate-90 md:rotate-0">→</div>
+                    <div class="flex-1 text-center p-4 border-2 border-[#e9d8a6] rounded-lg bg-yellow-50/50 flex flex-col justify-center">
+                        <div class="text-4xl mb-2">🧪</div>
+                        <h4 class="font-bold text-lg text-[#005f73]">Pre-Surgical Workup</h4>
+                        <p class="text-sm text-gray-700">Comprehensive tests including:</p>
+                        <ul class="list-disc list-inside text-xs text-gray-700 mt-1 text-left mx-auto max-w-[fit-content]">
+                            <li>Repeat ECHO</li>
+                            <li>LFT, T3T4TSH, Electrolytes</li>
+                            <li>Routine Urine Analysis</li>
+                            <li>PAC (Pre-Anesthetic Check-up)</li>
+                            <li>Medical & Dental Clearance</li>
+                        </ul>
+                    </div>
+                    <div class="flex items-center justify-center text-2xl text-gray-400 font-sans transform rotate-90 md:rotate-0">→</div>
+                    <div class="flex-1 text-center p-4 border-2 border-[#ee9b00] rounded-lg bg-orange-50/50 flex flex-col justify-center">
+                        <div class="text-4xl mb-2">🏥</div>
+                        <h4 class="font-bold text-lg text-[#005f73]">Surgery</h4>
+                        <p class="text-sm text-gray-700">Admission planned for AVR with a tissue valve.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="mt-16 py-8 bg-gray-100 border-t">
+        <div class="container mx-auto text-center text-sm text-gray-500">
+            <p>This interactive report is a visualization of consolidated medical records for Ms. Jayanti Roy (Jan-Jun 2025). It is for informational purposes only.</p>
+            <p>Built with Tailwind CSS and Chart.js. Confirmed: NO SVG or Mermaid JS used.</p>
+        </div>
+    </footer>
+
+    <script>
+        const palette = {
+            primary: '#0a9396',
+            secondary: '#94d2bd',
+            accent1: '#ee9b00',
+            accent2: '#ca6702',
+            accent3: '#bb3e03',
+            danger: '#ae2012',
+            dark: '#001219'
+        };
+
+        const chartTooltipOptions = {
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        title: function(tooltipItems) {
+                            const item = tooltipItems[0];
+                            let label = item.chart.data.labels[item.dataIndex];
+                            if (Array.isArray(label)) {
+                                return label.join(' ');
+                            }
+                            return label;
+                        }
+                    }
+                }
+            }
+        };
+
+        function wrapLabel(str, maxWidth = 16) {
+            if (str.length <= maxWidth) {
+                return str;
+            }
+            const words = str.split(' ');
+            let lines = [];
+            let currentLine = '';
+            words.forEach(word => {
+                if ((currentLine + ' ' + word).trim().length > maxWidth) {
+                    if (currentLine) lines.push(currentLine.trim());
+                    currentLine = word;
+                } else {
+                    currentLine = (currentLine + ' ' + word).trim();
+                }
+            });
+            if (currentLine) {
+                lines.push(currentLine.trim());
+            }
+            return lines.length > 0 ? lines : [str];
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+
+            const renderVitalsChart = () => {
+                const ctx = document.getElementById('vitalsChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Jan 17', 'June 24', 'June 26'],
+                        datasets: [
+                            {
+                                label: 'Heart Rate (bpm)',
+                                data: [112, 102, 98],
+                                borderColor: palette.danger,
+                                backgroundColor: palette.danger + '33',
+                                fill: false,
+                                tension: 0.1,
+                                yAxisID: 'y'
+                            },
+                            {
+                                label: 'Systolic BP (mmHg)',
+                                data: [130, 135, 110],
+                                borderColor: palette.primary,
+                                backgroundColor: palette.primary + '33',
+                                fill: false,
+                                tension: 0.1,
+                                yAxisID: 'y1'
+                            },
+                            {
+                                label: 'Diastolic BP (mmHg)',
+                                data: [70, 75, 60],
+                                borderColor: palette.accent1,
+                                backgroundColor: palette.accent1 + '33',
+                                fill: false,
+                                tension: 0.1,
+                                yAxisID: 'y1'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        ...chartTooltipOptions,
+                        scales: {
+                            y: {
+                                type: 'linear',
+                                display: true,
+                                position: 'left',
+                                beginAtZero: false,
+                                min: 60,
+                                title: { display: true, text: 'Heart Rate (bpm)' }
+                            },
+                            y1: {
+                                type: 'linear',
+                                display: true,
+                                position: 'right',
+                                beginAtZero: false,
+                                min: 50,
+                                grid: {
+                                    drawOnChartArea: false,
+                                },
+                                title: { display: true, text: 'Blood Pressure (mmHg)' }
+                            }
+                        }
+                    }
+                });
+            };
+
+            const renderCalciumScoreChart = () => {
+                const ctx = document.getElementById('calciumScoreChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['LAD Artery', 'Circumflex Artery', 'RCA'],
+                        datasets: [{
+                            label: 'Calcium Score Distribution',
+                            data: [127, 6, 1],
+                            backgroundColor: [palette.accent1, palette.accent2, palette.secondary],
+                            borderColor: '#f8f9fa',
+                            borderWidth: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        ...chartTooltipOptions,
+                        plugins: {
+                            ...chartTooltipOptions.plugins,
+                            legend: { position: 'bottom' },
+                            title: { display: true, text: 'Total Score: 134', font: { size: 16 } }
+                        }
+                    }
+                });
+            };
+
+            const renderGlucoseChart = () => {
+                const ctx = document.getElementById('glucoseChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Fasting Glucose', 'Post-Meal Glucose'],
+                        datasets: [{
+                            label: 'Patient Result (mg/dL)',
+                            data: [109, 164],
+                            backgroundColor: palette.accent1,
+                        }, {
+                            label: 'Normal Upper Limit',
+                            data: [99, 139],
+                            backgroundColor: palette.secondary,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        ...chartTooltipOptions,
+                        scales: {
+                            y: {
+                                beginAtZero: false,
+                                min: 50,
+                                title: { display: true, text: 'Glucose (mg/dL)' }
+                            }
+                        }
+                    }
+                });
+            };
+
+            const renderAnemiaChart = () => {
+                const ctx = document.getElementById('anemiaChart').getContext('2d');
+                const labelsRaw = ['Hemoglobin (g/dL)', 'Red Blood Cell Count', 'Hematocrit (%)', 'MCV (fL)', 'MCH (pg)', 'RDW (%)'];
+                const labelsWrapped = labelsRaw.map(l => wrapLabel(l));
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labelsWrapped,
+                        datasets: [{
+                            label: 'Patient Result',
+                            data: [9.0, 3.40, 27.6, 81.2, 26.6, 16.5],
+                            backgroundColor: palette.accent3,
+                        }, {
+                            label: 'Normal Lower Limit',
+                            data: [12.0, 3.8, 36.0, 83.0, 27.0, 11.6],
+                            backgroundColor: palette.secondary,
+                        }, {
+                             label: 'Normal Upper Limit',
+                             data: [15.0, 4.8, 46.0, 101.0, 32.0, 14.0],
+                             backgroundColor: palette.primary,
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        ...chartTooltipOptions,
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                title: { display: true, text: 'Value' }
+                            }
+                        },
+                         plugins: {
+                            ...chartTooltipOptions.plugins,
+                            legend: { position: 'bottom' }
+                        }
+                    }
+                });
+            };
+
+            renderVitalsChart();
+            renderCalciumScoreChart();
+            renderGlucoseChart();
+            renderAnemiaChart();
+
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
+        });
+    </script>
+</body>
+</html>
