@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atip Roy Medical Infographic - Enhanced</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- D3.js CDN for charts -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Light blue-gray background */
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 1.5rem;
+            background-color: #ffffff;
+            border-radius: 1.5rem; /* More rounded corners */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); /* Softer, larger shadow */
+            overflow: hidden;
+        }
+        .section-title {
+            font-size: 2.25rem; /* Larger title */
+            font-weight: 700;
+            color: #1a202c; /* Darker title color */
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 3px solid #4299e1; /* Blue underline */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+        }
+        .section-card {
+            background-color: #e2e8f0; /* Lighter card background */
+            padding: 1.5rem;
+            border-radius: 1rem; /* Rounded corners for cards */
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); /* Subtle card shadow */
+        }
+        .section-card h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2b6cb0; /* Blue heading for cards */
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .list-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+        }
+        .list-item span:first-child {
+            font-weight: 600;
+            color: #4a5568; /* Darker label color */
+            min-width: 120px; /* Align labels */
+            flex-shrink: 0;
+        }
+        .list-item span:last-child {
+            flex-grow: 1;
+        }
+        .medication-list li {
+            background-color: #f7fafc; /* Very light background for list items */
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        .medication-list li::before {
+            content: '💊'; /* Pill emoji icon */
+            font-size: 1.25rem;
+            line-height: 1;
+        }
+        .advice-list li {
+            background-color: #f7fafc;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        .advice-list li::before {
+            content: '✅'; /* Checkmark emoji icon */
+            font-size: 1.25rem;
+            line-height: 1;
+        }
+        .urgent-care-list li {
+            background-color: #fff5f5; /* Light red for urgent care */
+            color: #c53030; /* Darker red text */
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border: 1px solid #feb2b2; /* Red border */
+        }
+        .urgent-care-list li::before {
+            content: '🚨'; /* Siren emoji icon */
+            font-size: 1.25rem;
+            line-height: 1;
+        }
+        .billing-summary .grid-item {
+            background-color: #f7fafc;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        .billing-summary .grid-item .label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 0.25rem;
+        }
+        .billing-summary .grid-item .value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2d3748;
+        }
+        .billing-breakdown li {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px dashed #cbd5e0;
+        }
+        .billing-breakdown li:last-child {
+            border-bottom: none;
+        }
+        .billing-breakdown li span:first-child {
+            font-weight: 500;
+            color: #4a5568;
+        }
+        .billing-breakdown li span:last-child {
+            font-weight: 600;
+            color: #2b6cb0;
+        }
+        .icon {
+            font-size: 2rem;
+            line-height: 1;
+        }
+        #pie-chart-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 1.5rem;
+            flex-wrap: wrap; /* Allow wrapping on small screens */
+        }
+        #pie-chart {
+            width: 300px; /* Fixed width for SVG */
+            height: 300px; /* Fixed height for SVG */
+            background-color: #f7fafc;
+            border-radius: 50%;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        .chart-tooltip {
+            position: absolute;
+            text-align: center;
+            padding: 0.5rem;
+            background: #333;
+            color: #fff;
+            border-radius: 0.5rem;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+            font-size: 0.875rem;
+            z-index: 100;
+        }
+        .key-findings-item {
+            background-color: #f7fafc;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border-left: 4px solid #63b3ed; /* Blue border for emphasis */
+        }
+        .key-findings-item strong {
+            color: #2b6cb0;
+        }
+        #organ-bar-chart {
+            width: 100%;
+            height: 350px; /* Adjust height as needed */
+            background-color: #f7fafc;
+            border-radius: 0.75rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+        .bar {
+            fill: #4299e1; /* Blue bars */
+            transition: fill 0.3s ease;
+        }
+        .bar:hover {
+            fill: #2b6cb0; /* Darker blue on hover */
+        }
+        .axis text {
+            font-size: 0.875rem;
+            fill: #4a5568;
+        }
+        .axis line, .axis path {
+            stroke: #cbd5e0;
+        }
+        #llm-output-container {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background-color: #e6fffa; /* Light teal background */
+            border-left: 4px solid #38b2ac; /* Teal border */
+            border-radius: 0.75rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            display: none; /* Hidden by default */
+        }
+        #llm-output-container h4 {
+            font-weight: 600;
+            color: #2c7a7b;
+            margin-bottom: 0.5rem;
+        }
+        #llm-output-container p {
+            color: #4a5568;
+        }
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 0.5rem;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 1rem;
+                padding: 1rem;
+            }
+            .section-title {
+                font-size: 1.75rem;
+            }
+            .section-card h3 {
+                font-size: 1.25rem;
+            }
+            .list-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .list-item span:first-child {
+                min-width: auto;
+                margin-bottom: 0.25rem;
+            }
+            .billing-summary .grid-cols-3 {
+                grid-template-columns: 1fr;
+            }
+            #pie-chart-container {
+                flex-direction: column; /* Stack chart and legend on small screens */
+            }
+            #pie-chart-legend {
+                margin-top: 1rem;
+                margin-left: 0;
+                width: 100%;
+            }
+            #organ-bar-chart {
+                height: 400px; /* Adjust height for mobile */
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="section-title">
+            <span class="icon">🏥</span> Atip Roy's Medical Infographic
+        </h1>
+
+        <!-- Patient Overview -->
+        <div class="section-card">
+            <h3><span class="icon">👤</span> Patient Overview</h3>
+            <div class="space-y-2">
+                <div class="list-item"><span>Name:</span> <span>Atip Roy</span></div>
+                <div class="list-item"><span>UHID:</span> <span>RGH/110725/0115</span></div>
+                <div class="list-item"><span>IPID:</span> <span>IPID/110725/0062</span></div>
+                <div class="list-item"><span>Age/Gender:</span> <span>35 Years/Male</span></div>
+                <div class="list-item"><span>Admitting Doctor:</span> <span>Dr. Tirtha Pratim Purkait</span></div>
+                <div class="list-item"><span>Department:</span> <span>General Medicine</span></div>
+                <div class="list-item"><span>Insurance:</span> <span>New India Assurance Co. Ltd.</span></div>
+                <div class="list-item"><span>Admission Date:</span> <span>July 11, 2025, 04:37 PM</span></div>
+                <div class="list-item"><span>Discharge Date:</span> <span>July 13, 2025, 10:49 AM</span></div>
+            </div>
+        </div>
+
+        <!-- Hospital Stay & Diagnosis -->
+        <div class="section-card">
+            <h3><span class="icon">📋</span> Hospital Stay & Diagnosis</h3>
+            <div class="space-y-4">
+                <div>
+                    <h4 class="font-semibold text-lg text-gray-700 mb-2">Presenting Complaints:</h4>
+                    <p class="pl-4 border-l-4 border-blue-400">Pain over periumbilical region increased since morning on June 11, 2025.</p>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-2xl text-blue-800 mb-2">Final Diagnosis:</h4>
+                    <p class="pl-4 text-xl font-bold text-red-700 border-l-4 border-red-400">Hypereosinophilia associated with gastritis (ICD Code: D72.119)</p>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-lg text-gray-700 mb-2">Course in Hospital:</h4>
+                    <ul class="list-disc list-inside space-y-1 pl-4">
+                        <li>Relevant investigations performed.</li>
+                        <li>Upper GI Endoscopy showed no significant abnormality.</li>
+                        <li>CECT (W/A) done showed hepatic parenchymal calcification, angiomyolipoma left kidney.</li>
+                        <li>Gastroenterologist opinion obtained.</li>
+                        <li>Symptoms improved; patient discharged with advice.</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-2xl text-blue-800 mb-2">Patient Condition at Discharge:</h4>
+                    <p class="pl-4 text-xl font-bold text-green-700 border-l-4 border-green-400">Haemodynamically stable.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Key Medical Insights -->
+        <div class="section-card">
+            <h3 class="flex justify-between items-center">
+                <span><span class="icon">💡</span> Key Medical Insights</span>
+                <button id="summarizeMedicalJargon" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full text-sm flex items-center">
+                    ✨ Explain Jargon
+                </button>
+            </h3>
+            <div id="medical-insights-content" class="space-y-2">
+                <div class="key-findings-item">
+                    <span><strong>Primary Diagnosis:</strong> Hypereosinophilia associated with gastritis.</span>
+                </div>
+                <div class="key-findings-item">
+                    <span><strong>Liver Findings:</strong> USG and CECT both noted tiny nodular parenchymal calcifications in segment-VII of the liver.</span>
+                </div>
+                <div class="key-findings-item">
+                    <span><strong>Kidney Finding:</strong> CECT identified a small nodular fat density lesion (~25 HU, $0.3 \times 0.3$ cm) in the mid pole of the left kidney, consistent with an **angiomyolipoma**.</span>
+                </div>
+                <div class="key-findings-item">
+                    <span><strong>Gastrointestinal Status:</strong> Upper GI Endoscopy was normal, despite gastritis diagnosis, suggesting the issue might be functional or microscopic.</span>
+                </div>
+                <div class="key-findings-item">
+                    <span><strong>Overall Stability:</strong> Patient was discharged in a haemodynamically stable condition, indicating good recovery from acute symptoms.</span>
+                </div>
+            </div>
+            <div id="llm-output-container">
+                <h4>Simplified Explanation:</h4>
+                <p id="llm-explanation"></p>
+                <div id="loading-spinner" class="loading-spinner" style="display:none;"></div>
+            </div>
+        </div>
+
+        <!-- Medication on Discharge -->
+        <div class="section-card">
+            <h3><span class="icon">💊</span> Medication on Discharge</h3>
+            <ul class="medication-list space-y-2">
+                <li>Tablet ESOGRESS 40mg: One tablet once daily before breakfast for 1 month.</li>
+                <li>Syrup MUCAINE GEL: 10ml thrice daily before meal for 14 days.</li>
+                <li>SEROFLO Inhaler: 1 puff once daily (rinse mouth with water after use) to continue.</li>
+                <li>MDI LEVOLIN: 1 puff as and when necessary.</li>
+                <li>Tablet DECOLIC: One tablet as and when necessary in case of pain abdomen.</li>
+                <li>Tablet IVORAL FORTE: One tablet stat after 14 days.</li>
+                <li>Tablet HETRAZAN 100mg: One tablet thrice daily to continue till further advice.</li>
+                <li>Capsule PYLOFLUSH: One capsule once daily at bed time for 15 days.</li>
+                <li>Tablet MONTEK BL: One tablet once daily at bed time for 1 month.</li>
+            </ul>
+        </div>
+
+        <!-- Advice on Discharge -->
+        <div class="section-card">
+            <h3><span class="icon">📝</span> Advice on Discharge</h3>
+            <div class="space-y-4">
+                <div>
+                    <h4 class="font-semibold text-lg text-gray-700 mb-2">General Advice:</h4>
+                    <ul class="advice-list space-y-1">
+                        <li>Rest: Restful life at home for 7 days.</li>
+                        <li>Diet: Bland diet for 1 month.</li>
+                        <li>Fluid Intake: Liberal.</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-lg text-gray-700 mb-2">Follow-up:</h4>
+                    <p class="pl-4 border-l-4 border-blue-400">Review with Dr. Tirtha Pratim Purkait at OPD after 14 days with CBC report, or earlier if necessary with prior appointment (OPD Telebooking / Video Conference Number: 033-66011800).</p>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-lg text-red-700 mb-2">When to Seek Urgent Care:</h4>
+                    <ul class="urgent-care-list space-y-1">
+                        <li>High fever</li>
+                        <li>Loss of consciousness</li>
+                        <li>Fits</li>
+                        <li>Acute breathlessness</li>
+                        <li>Sudden weakness of limbs</li>
+                        <li>Severe giddiness</li>
+                        <li>Blood vomiting</li>
+                        <li>Contact: 033-66011800/66871800/9748932100 or attend emergency department, or consult family physician/local doctor immediately.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Imaging Findings -->
+        <div class="section-card">
+            <h3><span class="icon">🔍</span> Imaging Findings</h3>
+            <div class="space-y-4">
+                <div>
+                    <h4 class="font-semibold text-lg text-gray-700 mb-2">USG Whole Abdomen (July 12, 2025):</h4>
+                    <ul class="list-disc list-inside space-y-1 pl-4">
+                        <li>Few focal calcifications seen in segment-VII of liver.</li>
+                        <li>Gallbladder partially distended, lumen clear.</li>
+                        <li>Common bile duct undilated (3.3 mm).</li>
+                        <li>Portal vein normal (5.8 mm).</li>
+                        <li>Pancreas, Spleen, Kidneys (Right: 9.43 cm, Left: 9.87 cm), Ureters, Urinary Bladder, Prostate (Weight: 9.8 gms) appear normal.</li>
+                        <li>**Impression:** Few focal calcifications in segment-VII of liver. Rest unremarkable.</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-lg text-gray-700 mb-2">X-Ray Chest PA View (July 12, 2025):</h4>
+                    <ul class="list-disc list-inside space-y-1 pl-4">
+                        <li>No obvious parenchymal lung lesion.</li>
+                        <li>Hilar regions, costophrenic angles, and cardiac outline normal.</li>
+                        <li>**Impression:** Chest skiagram within normal limits.</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-lg text-gray-700 mb-2">CECT Scan of Whole Abdomen (July 12, 2025):</h4>
+                    <ul class="list-disc list-inside space-y-1 pl-4">
+                        <li>Liver: Enlarged, normal shape, smooth margins, normal attenuation/enhancement. Tiny nodular parenchymal calcifications in segment-VII.</li>
+                        <li>Gallbladder: Normally distended, walls smooth, lumen clear.</li>
+                        <li>CBD: Not dilated.</li>
+                        <li>Pancreas: Normal size, smooth margins, no altered attenuation/enhancing focus, no calcification, main duct not dilated.</li>
+                        <li>Spleen: Normal size, shape, margin, parenchymal density/enhancement.</li>
+                        <li>Supra renal glands: Normal size, shape, parenchymal attenuation.</li>
+                        <li>Kidneys: Normal size, shape, cortical outline, axis, attenuation/enhancement. Normal and prompt excretion bilaterally. **Small nodular fat density lesion (~25 HU, $0.3 \times 0.3$ cm) in mid pole of left kidney (angiomyolipoma).**</li>
+                        <li>Ureters: Normal course and calibre.</li>
+                        <li>Urinary Bladder: Normally distended, smooth walls, no calculus/lesion.</li>
+                        <li>Prostate: Normal size, shape, echotexture.</li>
+                        <li>**Impression:** Hepatic parenchymal calcification. Small angiomyolipoma in left kidney.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Organ Measurements Bar Chart -->
+        <div class="section-card">
+            <h3><span class="icon">📊</span> Organ Measurements (USG)</h3>
+            <p class="text-sm text-gray-600 mb-4">Measurements from the USG Whole Abdomen report, in centimeters (cm) or millimeters (mm).</p>
+            <div id="organ-bar-chart"></div>
+            <div class="chart-tooltip" style="opacity:0;"></div>
+        </div>
+
+        <!-- Endoscopy Report -->
+        <div class="section-card">
+            <h3><span class="icon">🔬</span> Endoscopy Report</h3>
+            <div class="space-y-4">
+                <h4 class="font-semibold text-lg text-gray-700 mb-2">Upper GI Endoscopy (July 12, 2025):</h4>
+                <ul class="list-disc list-inside space-y-1 pl-4">
+                    <li>**Esophagus:** Normal mucosa. GE Junction at 40cm. No stricture, varix, or hiatus hernia. LES competent.</li>
+                    <li>**Stomach:** Fundus, Body, Antrum, and Pylorus - Normal.</li>
+                    <li>**Duodenum:** D1- Normal mucosa. D2- Normal mucosa.</li>
+                    <li>**Biopsy:** Not taken.</li>
+                    <li>**Impression:** Normal study.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Billing Summary & Distribution -->
+        <div class="section-card billing-summary">
+            <h3><span class="icon">💰</span> Billing Summary & Distribution</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="grid-item">
+                    <div class="label">Total Hospital Charges</div>
+                    <div class="value">₹65870</div>
+                </div>
+                <div class="grid-item">
+                    <div class="label">Total Pharmacy Charges</div>
+                    <div class="value">₹6314</div>
+                </div>
+                <div class="grid-item bg-blue-100 border-2 border-blue-400">
+                    <div class="label text-blue-800">Net Charge</div>
+                    <div class="value text-blue-800">₹72184</div>
+                </div>
+                <div class="grid-item">
+                    <div class="label">Paid Amount</div>
+                    <div class="value">₹0</div>
+                </div>
+                <div class="grid-item bg-red-100 border-2 border-red-400 col-span-1 md:col-span-2">
+                    <div class="label text-red-800">Due Amount</div>
+                    <div class="value text-red-800">₹72184</div>
+                </div>
+            </div>
+
+            <h4 class="font-semibold text-lg text-gray-700 mb-2">Breakdown of Charges (Net Charge after Scheme Discount):</h4>
+            <ul class="billing-breakdown space-y-1">
+                <li><span>BED CHARGES:</span> <span>₹7920.00</span></li>
+                <li><span>CARDIOLOGY:</span> <span>₹533.00</span></li>
+                <li><span>ENDOSCOPY:</span> <span>₹3731.00</span></li>
+                <li><span>LABORATORY:</span> <span>₹15662.00</span></li>
+                <li><span>RADIOLOGY:</span> <span>₹24764.00</span></li>
+                <li><span>IP CONSULTATIONS:</span> <span>₹10000.00</span></li>
+                <li><span>WARD SERVICES:</span> <span>₹1260.00</span></li>
+                <li><span>MISCELLANEOUS:</span> <span>₹2000.00</span></li>
+                <li><span>IP PHARMACY:</span> <span>₹6313.83</span></li>
+            </ul>
+
+            <h4 class="font-semibold text-lg text-gray-700 mt-6 mb-2 text-center">Billing Distribution Overview:</h4>
+            <div id="pie-chart-container">
+                <svg id="pie-chart"></svg>
+                <div id="pie-chart-legend" class="ml-4 space-y-1"></div>
+            </div>
+            <div class="chart-tooltip" style="opacity:0;"></div>
+        </div>
+    </div>
+
+    <script>
+        // D3.js Pie Chart Script
+        document.addEventListener('DOMContentLoaded', function() {
+            const pieData = [
+                { category: 'BED CHARGES', value: 7920.00 },
+                { category: 'CARDIOLOGY', value: 533.00 },
+                { category: 'ENDOSCOPY', value: 3731.00 },
+                { category: 'LABORATORY', value: 15662.00 },
+                { category: 'RADIOLOGY', value: 24764.00 },
+                { category: 'IP CONSULTATIONS', value: 10000.00 },
+                { category: 'WARD SERVICES', value: 1260.00 },
+                { category: 'MISCELLANEOUS', value: 2000.00 },
+                { category: 'IP PHARMACY', value: 6313.83 }
+            ];
+
+            const pieWidth = 300;
+            const pieHeight = 300;
+            const pieRadius = Math.min(pieWidth, pieHeight) / 2;
+
+            const pieSvg = d3.select("#pie-chart")
+                .attr("width", pieWidth)
+                .attr("height", pieHeight)
+                .append("g")
+                .attr("transform", `translate(${pieWidth / 2},${pieHeight / 2})`);
+
+            const pieColor = d3.scaleOrdinal(d3.schemeCategory10);
+
+            const pieGenerator = d3.pie()
+                .value(d => d.value)
+                .sort(null);
+
+            const arcGenerator = d3.arc()
+                .innerRadius(0)
+                .outerRadius(pieRadius);
+
+            const arcs = pieSvg.selectAll("arc")
+                .data(pieGenerator(pieData))
+                .enter()
+                .append("g")
+                .attr("class", "arc");
+
+            arcs.append("path")
+                .attr("d", arcGenerator)
+                .attr("fill", d => pieColor(d.data.category))
+                .attr("stroke", "#fff")
+                .style("stroke-width", "2px")
+                .on("mouseover", function(event, d) {
+                    d3.select(this)
+                        .transition()
+                        .duration(200)
+                        .attr("d", d3.arc().innerRadius(0).outerRadius(pieRadius + 10)); // Enlarge on hover
+
+                    tooltip.html(`
+                        <strong>${d.data.category}</strong><br>
+                        Amount: ₹${d.data.value.toLocaleString('en-IN')}<br>
+                        Percentage: ${((d.data.value / d3.sum(pieData, d => d.value)) * 100).toFixed(2)}%
+                    `)
+                    .style("left", (event.pageX + 10) + "px")
+                    .style("top", (event.pageY - 28) + "px")
+                    .transition()
+                    .duration(200)
+                    .style("opacity", 0.9);
+                })
+                .on("mouseout", function(event, d) {
+                    d3.select(this)
+                        .transition()
+                        .duration(200)
+                        .attr("d", arcGenerator); // Revert to original size
+
+                    tooltip.transition()
+                        .duration(500)
+                        .style("opacity", 0);
+                });
+
+            // Add legend
+            const pieLegend = d3.select("#pie-chart-legend")
+                .selectAll(".legend-item")
+                .data(pieData)
+                .enter()
+                .append("div")
+                .attr("class", "legend-item flex items-center mb-1");
+
+            pieLegend.append("div")
+                .style("width", "18px")
+                .style("height", "18px")
+                .style("background-color", d => pieColor(d.category))
+                .style("border-radius", "4px")
+                .style("margin-right", "8px");
+
+            pieLegend.append("span")
+                .text(d => `${d.category} (₹${d.value.toLocaleString('en-IN')})`);
+
+            // Tooltip (shared for both charts)
+            const tooltip = d3.select("body").append("div")
+                .attr("class", "chart-tooltip")
+                .style("opacity", 0);
+
+
+            // D3.js Bar Chart for Organ Measurements
+            const organData = [
+                { organ: 'Liver', value: 13.58, unit: 'cm' },
+                { organ: 'Spleen', value: 8.58, unit: 'cm' },
+                { organ: 'Right Kidney', value: 9.43, unit: 'cm' },
+                { organ: 'Left Kidney', value: 9.87, unit: 'cm' },
+                { organ: 'CBD', value: 0.33, unit: 'cm' }, /* Converted 3.3mm to 0.33cm for consistent scale */
+                { organ: 'Portal Vein', value: 0.58, unit: 'cm' } /* Converted 5.8mm to 0.58cm for consistent scale */
+            ];
+
+            const margin = { top: 20, right: 30, bottom: 60, left: 60 };
+            const chartWidth = document.getElementById('organ-bar-chart').offsetWidth - margin.left - margin.right;
+            const chartHeight = document.getElementById('organ-bar-chart').offsetHeight - margin.top - margin.bottom;
+
+            const barSvg = d3.select("#organ-bar-chart")
+                .append("svg")
+                .attr("width", chartWidth + margin.left + margin.right)
+                .attr("height", chartHeight + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+
+            const xScale = d3.scaleBand()
+                .domain(organData.map(d => d.organ))
+                .range([0, chartWidth])
+                .padding(0.3);
+
+            const yScale = d3.scaleLinear()
+                .domain([0, d3.max(organData, d => d.value) * 1.1]) // 10% buffer
+                .range([chartHeight, 0]);
+
+            // X-axis
+            barSvg.append("g")
+                .attr("class", "x-axis")
+                .attr("transform", `translate(0,${chartHeight})`)
+                .call(d3.axisBottom(xScale))
+                .selectAll("text")
+                .attr("transform", "translate(-10,0)rotate(-45)")
+                .style("text-anchor", "end");
+
+            // Y-axis
+            barSvg.append("g")
+                .attr("class", "y-axis")
+                .call(d3.axisLeft(yScale).ticks(5).tickFormat(d => `${d} cm`));
+
+            // Bars
+            barSvg.selectAll(".bar")
+                .data(organData)
+                .enter()
+                .append("rect")
+                .attr("class", "bar")
+                .attr("x", d => xScale(d.organ))
+                .attr("y", d => yScale(d.value))
+                .attr("width", xScale.bandwidth())
+                .attr("height", d => chartHeight - yScale(d.value))
+                .on("mouseover", function(event, d) {
+                    d3.select(this).transition().duration(100).attr("fill", "#2b6cb0"); // Darker blue on hover
+                    tooltip.html(`<strong>${d.organ}</strong><br>Size: ${d.value} ${d.unit}`)
+                        .style("left", (event.pageX + 10) + "px")
+                        .style("top", (event.pageY - 28) + "px")
+                        .transition()
+                        .duration(200)
+                        .style("opacity", 0.9);
+                })
+                .on("mouseout", function() {
+                    d3.select(this).transition().duration(100).attr("fill", "#4299e1"); // Revert color
+                    tooltip.transition()
+                        .duration(500)
+                        .style("opacity", 0);
+                });
+
+            // Add Y-axis label
+            barSvg.append("text")
+                .attr("class", "y-axis-label")
+                .attr("transform", "rotate(-90)")
+                .attr("y", 0 - margin.left + 15)
+                .attr("x", 0 - (chartHeight / 2))
+                .attr("dy", "1em")
+                .style("text-anchor", "middle")
+                .style("font-size", "1rem")
+                .style("fill", "#4a5568")
+                .text("Size (cm)");
+
+            // Add X-axis label
+            barSvg.append("text")
+                .attr("class", "x-axis-label")
+                .attr("transform", `translate(${chartWidth / 2}, ${chartHeight + margin.top + 20})`)
+                .style("text-anchor", "middle")
+                .style("font-size", "1rem")
+                .style("fill", "#4a5568")
+                .text("Organ");
+
+            // Handle window resize for bar chart
+            window.addEventListener('resize', function() {
+                const newChartWidth = document.getElementById('organ-bar-chart').offsetWidth - margin.left - margin.right;
+                const newChartHeight = document.getElementById('organ-bar-chart').offsetHeight - margin.top - margin.bottom;
+
+                barSvg.attr("width", newChartWidth + margin.left + margin.right)
+                      .attr("height", newChartHeight + margin.top + margin.bottom);
+
+                xScale.range([0, newChartWidth]);
+                yScale.range([newChartHeight, 0]);
+
+                barSvg.select(".x-axis").call(d3.axisBottom(xScale));
+                barSvg.select(".y-axis").call(d3.axisLeft(yScale));
+
+                barSvg.selectAll(".bar")
+                    .attr("x", d => xScale(d.organ))
+                    .attr("y", d => yScale(d.value))
+                    .attr("width", xScale.bandwidth())
+                    .attr("height", d => newChartHeight - yScale(d.value));
+
+                barSvg.select(".x-axis")
+                    .attr("transform", `translate(0,${newChartHeight})`);
+
+                barSvg.select(".y-axis-label")
+                    .attr("y", 0 - margin.left + 15)
+                    .attr("x", 0 - (newChartHeight / 2));
+
+                barSvg.select(".x-axis-label")
+                    .attr("transform", `translate(${newChartWidth / 2}, ${newChartHeight + margin.top + 20})`);
+            });
+
+            // Gemini API Integration
+            document.getElementById('summarizeMedicalJargon').addEventListener('click', async () => {
+                const medicalInsightsContent = document.getElementById('medical-insights-content').innerText;
+                const llmOutputContainer = document.getElementById('llm-output-container');
+                const llmExplanation = document.getElementById('llm-explanation');
+                const loadingSpinner = document.getElementById('loading-spinner');
+
+                llmOutputContainer.style.display = 'block';
+                llmExplanation.innerText = '';
+                loadingSpinner.style.display = 'inline-block';
+
+                const prompt = `Please simplify the following medical insights for a general audience, explaining any complex terms in easy-to-understand language:\n\n${medicalInsightsContent}`;
+
+                let chatHistory = [];
+                chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+                const payload = { contents: chatHistory };
+                const apiKey = ""; // Canvas will provide this at runtime
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const result = await response.json();
+
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        const text = result.candidates[0].content.parts[0].text;
+                        llmExplanation.innerText = text;
+                    } else {
+                        llmExplanation.innerText = "Could not get a simplified explanation. Please try again.";
+                        console.error("Unexpected API response structure:", result);
+                    }
+                } catch (error) {
+                    llmExplanation.innerText = "Error fetching explanation. Please check your network or try again later.";
+                    console.error("Error calling Gemini API:", error);
+                } finally {
+                    loadingSpinner.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
