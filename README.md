@@ -1,0 +1,2 @@
+# Medinfo
+Medical Infographic pages
