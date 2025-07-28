@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infographic: Sports Management System Flows</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F8F8F8; /* Base light background */
+            color: #1D3557; /* Base dark text */
+        }
+        .card {
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        /* General Flow Elements */
+        .flow-step {
+            background-color: #ffffff;
+            border: 2px solid;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            font-weight: 600;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 80px;
+        }
+        .flow-step-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        .flow-connector {
+            height: 3rem;
+            width: 2px;
+            background-color: var(--connector-color);
+            margin: 0 auto;
+            position: relative;
+        }
+        .flow-connector::after {
+            content: '▼';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: var(--connector-color);
+            font-size: 1.5rem;
+        }
+        .flow-trigger {
+            font-size: 0.875rem;
+            font-style: italic;
+            margin-bottom: 0.5rem;
+        }
+        .flow-decision {
+            background-color: #ffffff;
+            border: 2px solid;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .flow-split-line-h {
+            height: 2px;
+            background-color: var(--connector-color);
+            width: 100%;
+        }
+        .flow-split-line-v {
+            width: 2px;
+            height: 2rem;
+            background-color: var(--connector-color);
+            margin: 0 auto;
+        }
+        .return-arrow {
+            position: relative;
+            height: 4rem;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .return-arrow .line-v {
+            position: absolute;
+            width: 2px;
+            height: 100%;
+            background-color: var(--return-arrow-color);
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .return-arrow .line-h {
+            position: absolute;
+            height: 2px;
+            background-color: var(--return-arrow-color);
+            width: calc(50% + 2rem);
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .return-arrow .arrow-head {
+            position: absolute;
+            left: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 2rem;
+            color: var(--return-arrow-color);
+        }
+
+        /* Success/Error States */
+        .bg-success {
+            background-color: #D4EDDA; /* Light green for success */
+            border-color: #28A745; /* Darker green border */
+            color: #155724; /* Dark green text */
+        }
+        .bg-error {
+            background-color: #F8D7DA; /* Light red for error */
+            border-color: #DC3545; /* Crimson border */
+            color: #721C24; /* Dark red text */
+        }
+        .text-green-600 { color: #28A745; }
+        .text-red-600 { color: #DC3545; }
+
+        /* Chart Container Styling */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 350px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+                max-height: 400px;
+            }
+        }
+
+        /* Stats Tracking Module (Purple Haze) */
+        .card.stats-tracking-card {
+            border-top: 8px solid #8A2BE2; /* Blue Violet Accent */
+        }
+        .stats-tracking-card h1, .stats-tracking-card h2, .stats-tracking-card h3 {
+            color: #4B0082; /* Indigo */
+        }
+        .stats-tracking-card .flow-step {
+            border-color: #9370DB; /* Medium Purple */
+            color: #4B0082; /* Indigo Text */
+        }
+        .stats-tracking-card .flow-step-icon {
+            color: #8A2BE2; /* Blue Violet */
+        }
+        .stats-tracking-card .flow-connector {
+            --connector-color: #8A2BE2; /* Blue Violet */
+        }
+        .stats-tracking-card .flow-connector::after {
+            color: #8A2BE2; /* Blue Violet */
+        }
+        .stats-tracking-card .flow-trigger {
+            color: #9370DB; /* Medium Purple */
+        }
+        .stats-tracking-card .flow-decision {
+            border-color: #9370DB; /* Medium Purple */
+            color: #4B0082; /* Indigo Text */
+        }
+        .stats-tracking-card .flow-split-line-h, .stats-tracking-card .flow-split-line-v {
+            background-color: #8A2BE2; /* Blue Violet */
+        }
+        .stats-tracking-card .return-arrow .line-v, .stats-tracking-card .return-arrow .line-h, .stats-tracking-card .return-arrow .arrow-head {
+            --return-arrow-color: #FFD700; /* Gold */
+        }
+        .stats-tracking-card .bg-custom-light {
+            background-color: rgba(138, 43, 226, 0.1); /* Blue Violet with transparency */
+            border-color: #8A2BE2; /* Blue Violet */
+        }
+        .stats-tracking-card .flow-step.colored-step {
+            background-color: #9370DB; /* Medium Purple */
+            color: white;
+            border-color: #4B0082; /* Indigo */
+        }
+        .stats-tracking-card .flow-step.colored-step .flow-step-icon {
+            color: white;
+        }
+        .stats-tracking-card .flow-step.colored-step .flow-trigger {
+            color: rgba(255, 255, 255, 0.8);
+        }
+        .stats-tracking-card footer {
+            border-top-color: #8A2BE2;
+        }
+
+        /* Reporting Platform Module (Ocean Breeze) */
+        .card.reporting-platform-card {
+            border-top: 8px solid #4682B4; /* Steel Blue Accent */
+        }
+        .reporting-platform-card h1, .reporting-platform-card h2, .reporting-platform-card h3 {
+            color: #6A5ACD; /* Slate Blue */
+        }
+        .reporting-platform-card .flow-step {
+            border-color: #ADD8E6; /* Light Blue */
+            color: #6A5ACD; /* Slate Blue Text */
+        }
+        .reporting-platform-card .flow-step-icon {
+            color: #4682B4; /* Steel Blue */
+        }
+        .reporting-platform-card .flow-connector {
+            --connector-color: #ADD8E6; /* Light Blue */
+        }
+        .reporting-platform-card .flow-connector::after {
+            color: #ADD8E6; /* Light Blue */
+        }
+        .reporting-platform-card .flow-trigger {
+            color: #F0E68C; /* Khaki */
+        }
+        .reporting-platform-card .flow-decision {
+            border-color: #ADD8E6; /* Light Blue */
+            color: #6A5ACD; /* Slate Blue Text */
+        }
+        .reporting-platform-card .flow-split-line-h, .reporting-platform-card .flow-split-line-v {
+            background-color: #ADD8E6; /* Light Blue */
+        }
+        .reporting-platform-card .return-arrow .line-v, .reporting-platform-card .return-arrow .line-h, .reporting-platform-card .return-arrow .arrow-head {
+            --return-arrow-color: #F0E68C; /* Khaki */
+        }
+        .reporting-platform-card .bg-custom-light {
+            background-color: rgba(173, 216, 230, 0.1); /* Light Blue with transparency */
+            border-color: #ADD8E6; /* Light Blue */
+        }
+        .reporting-platform-card .flow-step.colored-step {
+            background-color: #4682B4; /* Steel Blue */
+            color: white;
+            border-color: #6A5ACD; /* Slate Blue */
+        }
+        .reporting-platform-card .flow-step.colored-step .flow-step-icon {
+            color: white;
+        }
+        .reporting-platform-card .flow-step.colored-step .flow-trigger {
+            color: rgba(255, 255, 255, 0.8);
+        }
+        .reporting-platform-card footer {
+            border-top-color: #4682B4;
+        }
+
+        /* AI & Analytics Module (Sunset Glow) */
+        .card.ai-analytics-card {
+            border-top: 8px solid #FF6347; /* Tomato Accent */
+        }
+        .ai-analytics-card h1, .ai-analytics-card h2, .ai-analytics-card h3 {
+            color: #8B0000; /* Dark Red */
+        }
+        .ai-analytics-card .ai-feature-card {
+            background-color: #FFF0F5; /* Lavender Blush */
+            border: 2px solid #FFA07A; /* Light Orange */
+            color: #8B0000; /* Dark Red */
+        }
+        .ai-analytics-card .ai-feature-icon {
+            color: #FFD700; /* Gold */
+        }
+        .ai-analytics-card footer {
+            border-top-color: #FF6347;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="container mx-auto p-4 sm:p-6 md:p-8">
+
+        <header class="text-center mb-12 md:mb-16">
+            <h1 class="text-4xl md:text-6xl font-black mb-2">Sports Management System: Comprehensive Flows</h1>
+            <p class="text-lg md:text-xl text-[#9370DB]">A visual guide to core system operations: Stats Tracking, Reporting, and AI.</p>
+        </header>
+
+        <main class="space-y-12 md:space-y-16">
+
+            <!-- Section: Stats Tracking -->
+            <section id="stats-tracking" class="card stats-tracking-card">
+                <h2 class="text-3xl font-bold text-center mb-2">I. Stats Tracking Module: Detailed Flows</h2>
+                <p class="text-center text-gray-600 mb-8 max-w-3xl mx-auto">This module captures and analyzes player and match statistics, providing deep insights into performance, career progression, and fitness.</p>
+
+                <!-- Enter Match Statistics Flow -->
+                <div class="mb-12 p-4 rounded-lg bg-custom-light">
+                    <h3 class="text-2xl font-bold text-[#4B0082] mb-4 text-center">Enter Match Statistics</h3>
+                    <div class="flex flex-col items-center">
+                        <div class="flow-step">
+                            <span class="flow-step-icon">📊</span>
+                            <p class="flow-trigger">Scorers/Data entry personnel</p>
+                            User Enters Match Statistics
+                        </div>
+                        <div class="flow-connector"></div>
+                        <div class="flow-step colored-step">
+                            <span class="flow-step-icon">📈</span>
+                            System Updates Player Match Records
+                        </div>
+                        <div class="flow-connector"></div>
+                        <div class="flow-step bg-success">
+                            <span class="flow-step-icon text-green-800">✅</span>
+                            Stats Stored & Aggregates Updated
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Update Career Statistics Flow -->
+                <div class="mb-12 p-4 rounded-lg bg-custom-light">
+                    <h3 class="text-2xl font-bold text-[#4B0082] mb-4 text-center">Update Career Statistics</h3>
+                    <div class="flex flex-col items-center">
+                        <div class="flow-step">
+                            <span class="flow-step-icon">✨</span>
+                            <p class="flow-trigger">Automatically or on demand</p>
+                            New Stats Trigger Update
+                        </div>
+                        <div class="flow-connector"></div>
+                        <div class="flow-step colored-step">
+                            <span class="flow-step-icon">🧮</span>
+                            System Recalculates Career Totals & Analytics
+                        </div>
+                        <div class="flow-connector"></div>
+                        <div class="flow-step bg-success">
+                            <span class="flow-step-icon text-green-800">✔️</span>
+                            Up-to-Date Performance Metrics
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Record Injuries/Fitness Flow -->
+                <div class="mb-12 p-4 rounded-lg bg-custom-light">
+                    <h3 class="text-2xl font-bold text-[#4B0082] mb-4 text-center">Record Injuries/Fitness</h3>
+                    <div class="flex flex-col items-center">
+                        <div class="flow-step">
+                            <span class="flow-step-icon">🩹</span>
+                            <p class="flow-trigger">Medical staff/Coaches report</p>
+                            User Records Injury/Fitness Change
+                        </div>
+                        <div class="flow-connector"></div>
+                        <div class="flow-step colored-step">
+                            <span class="flow-step-icon">🩺</span>
+                            System Logs Injury Type, Date, Status
+                        </div>
+                        <div class="flow-connector"></div>
+                        <div class="flow-step bg-success">
+                            <span class="flow-step-icon text-green-800">📋</span>
+                            Health History Maintained
+                        </div>
+                    </div>
+                </div>
+
+                <!-- View Performance Reports Flow -->
+                <div class="p-4 rounded-lg bg-custom-light">
+                    <h3 class="text-2xl font-bold text-[#4B0082] mb-4 text-center">View Performance Reports</h3>
+                    <div class="flex flex-col items-center">
+                        <div class="flow-step">
+                            <span class="flow-step-icon">👁️</span>
+                            <p class="flow-trigger">Coaches/Selectors review stats</p>
+                            User Requests Performance Report
+                        </div>
+                        <div class="flow-connector"></div>
+                        <div class="flow-step colored-step">
+                            <span class="flow-step-icon">📊</span>
+                            System Generates Charts & Analytics
+                        </div>
+                        <div class="flow-connector"></div>
+                        <div class="flow-step bg-success">
+                            <span class="flow-step-icon text-green-800">💡</span>
+                            Strengths/Weaknesses Analyzed
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- Section: Reporting Platform -->
+            <section id="reporting-platform" class="card reporting-platform-card">
+                <h2 class="text-3xl font-bold text-center mb-2">II. Reporting Platform: Detailed Flows</h2>
+                <p class="text-center text-gray-600 mb-8 max-w-3xl mx-auto">This module handles all narrative and observational reporting, providing a structured way for officials, selectors, and administrators to document activities and assessments.</p>
+
+                <!-- Submit Match Report (Officials) Flow -->
+                <div class="mb-12 p-4 rounded-lg bg-custom-light">
+                    <h3 class="text-2xl font-bold text-[#6A5ACD] mb-4 text-center">Submit Match Report (Officials)</h3>
+                    <div class="flex flex-col items-center">
+                        <div class="flow-step">
+                            <span class="flow-step-icon">📝</span>
+                            <p class="flow-trigger">Umpire/Referee after game</p>
+                            Official Accesses Report Form
+                        </div>
+                        <div class="flow-connector"></div>
+                        <div class="flow-step colored-step">
+                            <span class="flow-step-icon">✔️</span>
+                            System Provides Form
+                        </div>
+                        <div class="flow-connector"></div>
+                        <div class="flow-step bg-success">
+                            <span class="flow-step-icon text-green-800">✅</span>
+                            Report Saved & Flagged for Review
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Match Observations (Selectors) Flow -->
+                <div class="mb-12 p-4 rounded-lg bg-custom-light">
+                    <h3 class="text-2xl font-bold text-[#6A5ACD] mb-4 text-center">Submit Match Observations (Selectors)</h3>
+                    <div class="flex flex-col items-center">
+                        <div class="flow-step">
+                            <span class="flow-step-icon">👁️</span>
+                            <p class="flow-trigger">Selector after match review</p>
+                            Selector Accesses Observation Form
+                        </div>
+                        <div class="flow-connector"></div>
+                        <div class="flow-step colored-step">
+                            <span class="flow-step-icon">✍️</span>
+                            System Offers Input Form
+                        </div>
+                        <div class="flow-connector"></div>
+                        <div class="flow-step bg-success">
+                            <span class="flow-step-icon text-green-800">✅</span>
+                            Observations Logged Against Match/Players
+                        </div>
+                    </div>
+                </div>
+
+                <!-- District/Provincial Activity Report Flow -->
+                <div class="mb-12 p-4 rounded-lg bg-custom-light">
+                    <h3 class="text-2xl font-bold text-[#6A5ACD] mb-4 text-center">District/Provincial Activity Report</h3>
+                    <div class="flex flex-col items-center">
+                        <div class="flow-step">
+                            <span class="flow-step-icon">🏢</span>
+                            <p class="flow-trigger">Local CAN offices periodically</p>
+                            Office Prepares Activity Report
+                        </div>
+                        <div class="flow-connector"></div>
+                        <div class="flow-step colored-step">
+                            <span class="flow-step-icon">📥</span>
+                            System Accepts & Archives Report
+                        </div>
+                        <div class="flow-connector"></div>
+                        <div class="flow-step bg-success">
+                            <span class="flow-step-icon text-green-800">✅</span>
+                            Report Stored for CAN Oversight
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Player Assignment Feedback Flow -->
+                <div class="p-4 rounded-lg bg-custom-light">
+                    <h3 class="text-2xl font-bold text-[#6A5ACD] mb-4 text-center">Player Assignment Feedback</h3>
+                    <div class="flex flex-col items-center">
+                        <div class="flow-step">
+                            <span class="flow-step-icon">🗣️</span>
+                            <p class="flow-trigger">Player completes assignment</p>
+                            Player Fills Report Form
+                        </div>
+                        <div class="flow-connector"></div>
+                        <div class="flow-step colored-step">
+                            <span class="flow-step-icon">💾</span>
+                            System Saves Report
+                        </div>
+                        <div class="flow-connector"></div>
+                        <div class="flow-step bg-success">
+                            <span class="flow-step-icon text-green-800">✅</span>
+                            Report Available for Coach Review
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- Section: AI & Analytics -->
+            <section id="ai-analytics" class="card ai-analytics-card">
+                <h2 class="text-3xl font-bold text-center mb-2">III. AI & Analytics Module: Core Capabilities</h2>
+                <p class="text-center text-gray-600 mb-8 max-w-3xl mx-auto">This module leverages advanced AI and analytical capabilities to transform raw data into actionable insights, driving performance and strategic decision-making.</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 mb-8">
+                    <!-- Performance Trend Analysis -->
+                    <div class="ai-feature-card p-6 rounded-lg text-center">
+                        <span class="ai-feature-icon text-5xl mb-4 block">📈</span>
+                        <h3 class="text-xl font-bold mb-2">Performance Trend Analysis</h3>
+                        <p class="text-gray-700 text-sm">Analyzes player performance over time to identify growth, plateaus, or declines, providing a historical context for current form.</p>
+                        <div class="chart-container mt-4">
+                            <canvas id="performanceTrendChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Strengths and Weaknesses Identification -->
+                    <div class="ai-feature-card p-6 rounded-lg text-center">
+                        <span class="ai-feature-icon text-5xl mb-4 block">💪</span>
+                        <h3 class="text-xl font-bold mb-2">Strengths & Weaknesses Identification</h3>
+                        <p class="text-gray-700 text-sm">AI identifies individual player strengths and weaknesses based on comprehensive data, informing targeted development plans.</p>
+                        <div class="chart-container mt-4">
+                            <canvas id="strengthsWeaknessesChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Gap Analysis & Recommendations -->
+                    <div class="ai-feature-card p-6 rounded-lg text-center">
+                        <span class="ai-feature-icon text-5xl mb-4 block">🔍</span>
+                        <h3 class="text-xl font-bold mb-2">Gap Analysis & Recommendations</h3>
+                        <p class="text-gray-700 text-sm">Provides data-driven gap analysis and suggests improvement strategies to bridge performance disparities.</p>
+                    </div>
+
+                    <!-- Predictive Analytics -->
+                    <div class="ai-feature-card p-6 rounded-lg text-center">
+                        <span class="ai-feature-icon text-5xl mb-4 block">🔮</span>
+                        <h3 class="text-xl font-bold mb-2">Predictive Analytics</h3>
+                        <p class="text-gray-700 text-sm">Forecasts future player performance and development paths, enabling proactive decision-making and talent nurturing.</p>
+                    </div>
+
+                    <!-- Data-Driven Recommendations -->
+                    <div class="ai-feature-card p-6 rounded-lg text-center md:col-span-2">
+                        <span class="ai-feature-icon text-5xl mb-4 block">💡</span>
+                        <h3 class="text-xl font-bold mb-2">Data-Driven Recommendations</h3>
+                        <p class="text-gray-700 text-sm">Offers actionable insights and suggestions for training, strategy, and player management based on aggregated data analysis.</p>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <footer class="text-center mt-12 md:mt-16 pt-8 border-t-2 border-[#8A2BE2]">
+            <p class="text-lg text-[#4B0082]">A holistic system for enhanced sports management and performance optimization.</p>
+        </footer>
+
+    </div>
+
+    <script>
+        const chartTooltipConfig = {
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        title: function(tooltipItems) {
+                            const item = tooltipItems[0];
+                            let label = item.chart.data.labels[item.dataIndex];
+                            if (Array.isArray(label)) {
+                                return label.join(' ');
+                            }
+                            return label;
+                        }
+                    }
+                }
+            }
+        };
+
+        const wrapLabel = (label) => {
+            if (label.length <= 16) return label;
+            const words = label.split(' ');
+            const lines = [];
+            let currentLine = '';
+            for (const word of words) {
+                if ((currentLine + ' ' + word).length > 16) {
+                    lines.push(currentLine);
+                    currentLine = word;
+                } else {
+                    currentLine = (currentLine ? currentLine + ' ' : '') + word;
+                }
+            }
+            lines.push(currentLine);
+            return lines;
+        };
+
+        // Chart for Performance Trend Analysis (Line Chart)
+        const perfTrendCtx = document.getElementById('performanceTrendChart').getContext('2d');
+        new Chart(perfTrendCtx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                datasets: [{
+                    label: 'Player Rating',
+                    data: [75, 80, 78, 85, 82, 90],
+                    fill: true,
+                    backgroundColor: 'rgba(255, 99, 71, 0.2)', /* Tomato with transparency */
+                    borderColor: '#FF6347', /* Tomato */
+                    tension: 0.3,
+                    pointBackgroundColor: '#8B0000', /* Dark Red */
+                    pointRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        title: { display: true, text: 'Rating' }
+                    }
+                },
+                plugins: { ...chartTooltipConfig.plugins }
+            }
+        });
+
+        // Chart for Strengths and Weaknesses Identification (Radar Chart)
+        const strengthsWeaknessesCtx = document.getElementById('strengthsWeaknessesChart').getContext('2d');
+        const swLabels = ['Batting', 'Bowling', 'Fielding', 'Fitness', 'Leadership', 'Strategy'];
+        new Chart(strengthsWeaknessesCtx, {
+            type: 'radar',
+            data: {
+                labels: swLabels.map(wrapLabel),
+                datasets: [{
+                    label: 'Player A Profile',
+                    data: [85, 70, 90, 75, 60, 80],
+                    backgroundColor: 'rgba(255, 215, 0, 0.2)', /* Gold with transparency */
+                    borderColor: '#FFD700', /* Gold */
+                    pointBackgroundColor: '#8B0000', /* Dark Red */
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: '#FFD700'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        max: 100,
+                        pointLabels: {
+                            font: { size: 10 }
+                        }
+                    }
+                },
+                plugins: { ...chartTooltipConfig.plugins }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infographic: User Management Flow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F2F2F2;
+            color: #040F16;
+        }
+        .card {
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border-top: 8px solid #6EC5B8;
+            padding: 1.5rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .flow-step {
+            background-color: #ffffff;
+            border: 2px solid #2A9D8F;
+            color: #2A9D8F;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            font-weight: 600;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 80px;
+        }
+        .flow-step-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: #E76F51;
+        }
+        .flow-connector {
+            height: 3rem;
+            width: 2px;
+            background-color: #6EC5B8;
+            margin: 0 auto;
+            position: relative;
+        }
+        .flow-connector::after {
+            content: '▼';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #6EC5B8;
+            font-size: 1.5rem;
+        }
+        .flow-trigger {
+            font-size: 0.875rem;
+            font-style: italic;
+            color: #E76F51;
+            margin-bottom: 0.5rem;
+        }
+        h1, h2, h3 {
+            color: #2A9D8F;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 350px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+                max-height: 400px;
+            }
+        }
+        .flow-path-horizontal {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 2px;
+            background-color: #6EC5B8;
+            width: 100%;
+            position: relative;
+        }
+        .flow-path-horizontal::before {
+            content: '▶';
+            position: absolute;
+            right: -10px;
+            color: #6EC5B8;
+            font-size: 1.5rem;
+        }
+        .flow-path-label-h {
+            position: absolute;
+            top: -1.5rem;
+            background-color: #F2F2F2;
+            padding: 0 0.5rem;
+            font-weight: bold;
+            color: #2A9D8F;
+        }
+        .flow-split-branch {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+        }
+        .flow-split-line-v {
+            width: 2px;
+            height: 2rem;
+            background-color: #6EC5B8;
+            margin: 0 auto;
+        }
+        .flow-split-line-h {
+            height: 2px;
+            background-color: #6EC5B8;
+            width: 100%;
+        }
+        .flow-decision {
+            background-color: #ffffff;
+            border: 2px solid #2A9D8F;
+            color: #2A9D8F;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .return-arrow {
+            position: relative;
+            height: 4rem;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .return-arrow .line-v {
+            position: absolute;
+            width: 2px;
+            height: 100%;
+            background-color: #F4A261;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .return-arrow .line-h {
+            position: absolute;
+            height: 2px;
+            background-color: #F4A261;
+            width: calc(50% + 2rem); /* Adjust width to reach back */
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .return-arrow .arrow-head {
+            position: absolute;
+            left: -10px; /* Position at the start of the horizontal line */
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 2rem;
+            color: #F4A261;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="container mx-auto p-4 sm:p-6 md:p-8">
+
+        <header class="text-center mb-12 md:mb-16">
+            <h1 class="text-4xl md:text-6xl font-black mb-2">User Management: Detailed Flows</h1>
+            <p class="text-lg md:text-xl text-[#2A9D8F]">A visual guide to account handling, authentication, and role management.</p>
+        </header>
+
+        <main class="space-y-12 md:space-y-16">
+
+            <!-- Section 1: User Management -->
+            <section id="user-management" class="card">
+                <h2 class="text-3xl font-bold text-center mb-2">Core User Module Functions</h2>
+                <p class="text-center text-gray-600 mb-8 max-w-3xl mx-auto">This module is the gateway to the system, handling secure access and role-based permissions for every user, from players to administrators. Below are the detailed user flows for each key function.</p>
+
+                <!-- User Registration Flow -->
+                <div class="mb-12 p-4 border border-[#6EC5B8] rounded-lg bg-teal-50/50">
+                    <h3 class="text-2xl font-bold text-[#E76F51] mb-4 text-center">User Registration</h3>
+                    <div class="flex flex-col items-center">
+                        <div class="flow-step">
+                            <span class="flow-step-icon">👤</span>
+                            <p class="flow-trigger">New user signs up</p>
+                            User Initiates Registration
+                        </div>
+                        <div class="flow-connector"></div>
+                        <div class="flow-step" id="registration-details-step">
+                            <span class="flow-step-icon">📝</span>
+                            Enters Registration Details
+                        </div>
+                        <div class="flow-connector"></div>
+                        <div class="flow-decision">
+                            System Validates Input
+                        </div>
+                        <div class="flex w-full justify-center relative my-4">
+                            <div class="flow-split-line-h w-1/2"></div>
+                            <div class="flow-split-line-v h-8 absolute top-0 left-1/4 -translate-x-1/2"></div>
+                            <div class="flow-split-line-v h-8 absolute top-0 right-1/4 translate-x-1/2"></div>
+                            <span class="absolute -top-6 left-1/4 -translate-x-1/2 text-sm font-bold text-green-600">✅ Valid</span>
+                            <span class="absolute -top-6 right-1/4 translate-x-1/2 text-sm font-bold text-red-600">❌ Invalid</span>
+                        </div>
+                        <div class="flex w-full justify-center gap-8">
+                            <div class="flow-split-branch">
+                                <div class="flow-step bg-green-100 border-green-500 text-green-700">
+                                    <span class="flow-step-icon text-green-700">⚙️</span>
+                                    System Assigns Role
+                                </div>
+                                <div class="flow-connector"></div>
+                                <div class="flow-step bg-green-100 border-green-500 text-green-700">
+                                    <span class="flow-step-icon text-green-700">💾</span>
+                                    Store User Profile in Database
+                                </div>
+                                <div class="flow-connector"></div>
+                                <div class="flow-step bg-green-200 border-green-700 text-green-800">
+                                    <span class="flow-step-icon text-green-800">🎉</span>
+                                    Registration Successful
+                                </div>
+                            </div>
+                            <div class="flow-split-branch">
+                                <div class="flow-step bg-red-100 border-red-500 text-red-700">
+                                    <span class="flow-step-icon text-red-700">🚫</span>
+                                    Display Error Message
+                                </div>
+                                <div class="return-arrow">
+                                    <div class="line-v"></div>
+                                    <div class="line-h"></div>
+                                    <span class="arrow-head">↩</span>
+                                </div>
+                                <p class="text-sm text-gray-500 -mt-4">Returns to "Enters Details"</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Login/Authentication Flow -->
+                <div class="mb-12 p-4 border border-[#6EC5B8] rounded-lg bg-teal-50/50">
+                    <h3 class="text-2xl font-bold text-[#E76F51] mb-4 text-center">User Login/Authentication</h3>
+                    <div class="flex flex-col items-center">
+                        <div class="flow-step">
+                            <span class="flow-step-icon">🔑</span>
+                            <p class="flow-trigger">Registered user attempts login</p>
+                            User Enters Credentials
+                        </div>
+                        <div class="flow-connector"></div>
+                        <div class="flow-decision">
+                            System Verifies Credentials
+                        </div>
+                        <div class="flex w-full justify-center relative my-4">
+                            <div class="flow-split-line-h w-1/2"></div>
+                            <div class="flow-split-line-v h-8 absolute top-0 left-1/4 -translate-x-1/2"></div>
+                            <div class="flow-split-line-v h-8 absolute top-0 right-1/4 translate-x-1/2"></div>
+                            <span class="absolute -top-6 left-1/4 -translate-x-1/2 text-sm font-bold text-green-600">✅ Success</span>
+                            <span class="absolute -top-6 right-1/4 translate-x-1/2 text-sm font-bold text-red-600">❌ Failure</span>
+                        </div>
+                        <div class="flex w-full justify-center gap-8">
+                            <div class="flow-split-branch">
+                                <div class="flow-step bg-green-100 border-green-500 text-green-700">
+                                    <span class="flow-step-icon text-green-700">📊</span>
+                                    Enforce Role-Based Dashboard View
+                                </div>
+                                <div class="flow-connector"></div>
+                                <div class="flow-step bg-green-200 border-green-700 text-green-800">
+                                    <span class="flow-step-icon text-green-800">✅</span>
+                                    Secure Access Granted
+                                </div>
+                            </div>
+                            <div class="flow-split-branch">
+                                <div class="flow-step bg-red-100 border-red-500 text-red-700">
+                                    <span class="flow-step-icon text-red-700">🔒</span>
+                                    Display Login Error
+                                </div>
+                                <div class="return-arrow">
+                                    <div class="line-v"></div>
+                                    <div class="line-h"></div>
+                                    <span class="arrow-head">↩</span>
+                                </div>
+                                <p class="text-sm text-gray-500 -mt-4">Returns to "Enters Credentials"</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Profile Update Flow -->
+                <div class="mb-12 p-4 border border-[#6EC5B8] rounded-lg bg-teal-50/50">
+                    <h3 class="text-2xl font-bold text-[#E76F51] mb-4 text-center">Profile Update</h3>
+                    <div class="flex flex-col items-center">
+                        <div class="flow-step">
+                            <span class="flow-step-icon">✏️</span>
+                            <p class="flow-trigger">Any user edits personal info</p>
+                            User Edits Profile Information
+                        </div>
+                        <div class="flow-connector"></div>
+                        <div class="flow-decision">
+                            System Validates Changes
+                        </div>
+                        <div class="flex w-full justify-center relative my-4">
+                            <div class="flow-split-line-h w-1/2"></div>
+                            <div class="flow-split-line-v h-8 absolute top-0 left-1/4 -translate-x-1/2"></div>
+                            <div class="flow-split-line-v h-8 absolute top-0 right-1/4 translate-x-1/2"></div>
+                            <span class="absolute -top-6 left-1/4 -translate-x-1/2 text-sm font-bold text-green-600">✅ Valid</span>
+                            <span class="absolute -top-6 right-1/4 translate-x-1/2 text-sm font-bold text-red-600">❌ Invalid</span>
+                        </div>
+                        <div class="flex w-full justify-center gap-8">
+                            <div class="flow-split-branch">
+                                <div class="flow-step bg-green-100 border-green-500 text-green-700">
+                                    <span class="flow-step-icon text-green-700">🔄</span>
+                                    Updates Profile Fields in Repository
+                                </div>
+                                <div class="flow-connector"></div>
+                                <div class="flow-step bg-green-200 border-green-700 text-green-800">
+                                    <span class="flow-step-icon text-green-800">✔️</span>
+                                    Changes Saved with Audit Info
+                                </div>
+                            </div>
+                            <div class="flow-split-branch">
+                                <div class="flow-step bg-red-100 border-red-500 text-red-700">
+                                    <span class="flow-step-icon text-red-700">⚠️</span>
+                                    Display Validation Error
+                                </div>
+                                <div class="return-arrow">
+                                    <div class="line-v"></div>
+                                    <div class="line-h"></div>
+                                    <span class="arrow-head">↩</span>
+                                </div>
+                                <p class="text-sm text-gray-500 -mt-4">Returns to "Edits Information"</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Role Assignment & Management (Admin) Flow -->
+                <div class="p-4 border border-[#6EC5B8] rounded-lg bg-teal-50/50">
+                    <h3 class="text-2xl font-bold text-[#E76F51] mb-4 text-center">Role Assignment & Management (Admin)</h3>
+                    <div class="flex flex-col items-center">
+                        <div class="flow-step bg-[#6EC5B8] text-white border-[#2A9D8F]">
+                            <span class="flow-step-icon text-white">👑</span>
+                            <p class="flow-trigger text-white/80">Admin adds/changes user role</p>
+                            Admin Modifies User Role
+                        </div>
+                        <div class="flow-connector"></div>
+                        <div class="flow-step bg-[#6EC5B8] text-white border-[#2A9D8F]">
+                            <span class="flow-step-icon text-white">👥</span>
+                            System Updates User's Role
+                        </div>
+                        <div class="flow-connector"></div>
+                        <div class="flow-step bg-[#6EC5B8] text-white border-[#2A9D8F]">
+                            <span class="flow-step-icon text-white">⚙️</span>
+                            Adjusts Access Rights Across Modules
+                        </div>
+                        <div class="flow-connector"></div>
+                        <div class="flow-step bg-green-200 border-green-700 text-green-800">
+                            <span class="flow-step-icon text-green-800">✅</span>
+                            Permissions Updated
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+
+        </main>
+
+        <footer class="text-center mt-12 md:mt-16 pt-8 border-t-2 border-[#6EC5B8]">
+            <p class="text-lg text-[#2A9D8F]">Robust user management system for secure and efficient operations.</p>
+        </footer>
+
+    </div>
+
+    <script>
+        const freshModern = {
+            teal: '#6EC5B8',
+            darkTeal: '#2A9D8F',
+            yellow: '#E9C46A',
+            orange: '#F4A261',
+            redOrange: '#E76F51',
+            lightGray: '#F2F2F2'
+        };
+
+        const chartTooltipConfig = {
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        title: function(tooltipItems) {
+                            const item = tooltipItems[0];
+                            let label = item.chart.data.labels[item.dataIndex];
+                            if (Array.isArray(label)) {
+                                return label.join(' ');
+                            }
+                            return label;
+                        }
+                    }
+                }
+            }
+        };
+
+        const wrapLabel = (label) => {
+            if (label.length <= 16) return label;
+            const words = label.split(' ');
+            const lines = [];
+            let currentLine = '';
+            for (const word of words) {
+                if ((currentLine + ' ' + word).length > 16) {
+                    lines.push(currentLine);
+                    currentLine = word;
+                } else {
+                    currentLine = (currentLine ? currentLine + ' ' : '') + word;
+                }
+            }
+            lines.push(currentLine);
+            return lines;
+        };
+    </script>
+</body>
+</html>

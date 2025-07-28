@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infographic: Match Scheduling Module Flow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F8F8F8; /* Earthy Tones: Light background */
+            color: #1D3557; /* Earthy Tones: Dark Blue text for contrast */
+        }
+        .card {
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-top: 8px solid #A8DADC; /* Earthy Tones: Light Blue/Green accent */
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        /* Earthy Tones Palette */
+        h1, h2, h3 {
+            color: #1D3557; /* Dark Blue */
+        }
+        .flow-step {
+            background-color: #ffffff;
+            border: 2px solid #457B9D; /* Medium Blue */
+            color: #1D3557; /* Dark Blue text */
+            padding: 1rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            font-weight: 600;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 80px;
+        }
+        .flow-step-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: #E63946; /* Red accent */
+        }
+        .flow-connector {
+            height: 3rem;
+            width: 2px;
+            background-color: #A8DADC; /* Light Blue/Green */
+            margin: 0 auto;
+            position: relative;
+        }
+        .flow-connector::after {
+            content: '▼';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #A8DADC; /* Light Blue/Green */
+            font-size: 1.5rem;
+        }
+        .flow-trigger {
+            font-size: 0.875rem;
+            font-style: italic;
+            color: #F4A261; /* Orange accent */
+            margin-bottom: 0.5rem;
+        }
+        .flow-decision {
+            background-color: #ffffff;
+            border: 2px solid #457B9D; /* Medium Blue */
+            color: #1D3557; /* Dark Blue text */
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .flow-split-line-h {
+            height: 2px;
+            background-color: #A8DADC; /* Light Blue/Green */
+            width: 100%;
+        }
+        .flow-split-line-v {
+            width: 2px;
+            height: 2rem;
+            background-color: #A8DADC; /* Light Blue/Green */
+            margin: 0 auto;
+        }
+        .return-arrow {
+            position: relative;
+            height: 4rem;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .return-arrow .line-v {
+            position: absolute;
+            width: 2px;
+            height: 100%;
+            background-color: #F4A261; /* Orange */
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .return-arrow .line-h {
+            position: absolute;
+            height: 2px;
+            background-color: #F4A261; /* Orange */
+            width: calc(50% + 2rem); /* Adjusted width to reach back */
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .return-arrow .arrow-head {
+            position: absolute;
+            left: -10px; /* Position at the start of the horizontal line */
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 2rem;
+            color: #F4A261; /* Orange */
+        }
+
+        /* Backgrounds and Borders */
+        .bg-custom-light {
+            background-color: rgba(168, 218, 220, 0.1); /* A8DADC with transparency */
+            border-color: #A8DADC; /* Light Blue/Green */
+        }
+        .bg-success {
+            background-color: #D4EDDA; /* Light green for success */
+            border-color: #28A745; /* Darker green border */
+            color: #155724; /* Dark green text */
+        }
+        .bg-error {
+            background-color: #F8D7DA; /* Light red for error */
+            border-color: #DC3545; /* Darker red border */
+            color: #721C24; /* Dark red text */
+        }
+        .text-green-600 { color: #28A745; }
+        .text-red-600 { color: #DC3545; }
+
+        /* Specific overrides for colored steps */
+        .flow-step.colored-step {
+            background-color: #457B9D; /* Medium Blue */
+            color: white;
+            border-color: #1D3557; /* Dark Blue */
+        }
+        .flow-step.colored-step .flow-step-icon {
+            color: white;
+        }
+        .flow-step.colored-step .flow-trigger {
+            color: rgba(255, 255, 255, 0.8);
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="container mx-auto p-4 sm:p-6 md:p-8">
+
+        <header class="text-center mb-12 md:mb-16">
+            <h1 class="text-4xl md:text-6xl font-black mb-2">Match Scheduling Module: Detailed Flows</h1>
+            <p class="text-lg md:text-xl text-[#457B9D]">Streamlining game fixtures, official assignments, and schedule updates.</p>
+        </header>
+
+        <main class="space-y-12 md:space-y-16">
+
+            <!-- Section: Match Scheduling -->
+            <section id="match-scheduling" class="card">
+                <h2 class="text-3xl font-bold text-center mb-2">Core Match Scheduling Functions</h2>
+                <p class="text-center text-gray-600 mb-8 max-w-3xl mx-auto">This module coordinates all aspects of match fixtures, from creation to staff assignment, ensuring smooth coordination and timely communication for all events.</p>
+
+                <!-- Schedule New Match Flow -->
+                <div class="mb-12 p-4 rounded-lg bg-custom-light">
+                    <h3 class="text-2xl font-bold text-[#E63946] mb-4 text-center">Schedule New Match</h3>
+                    <div class="flex flex-col items-center">
+                        <div class="flow-step">
+                            <span class="flow-step-icon">📅</span>
+                            <p class="flow-trigger">Admin/Official creates fixture</p>
+                            User Defines Match Details
+                        </div>
+                        <div class="flow-connector"></div>
+                        <div class="flow-step">
+                            <span class="flow-step-icon">📝</span>
+                            System Records Match in Calendar
+                        </div>
+                        <div class="flow-connector"></div>
+                        <div class="flow-step colored-step">
+                            <span class="flow-step-icon">🧑‍⚖️</span>
+                            System Assigns Officials & Scorers
+                        </div>
+                        <div class="flow-connector"></div>
+                        <div class="flow-step bg-success">
+                            <span class="flow-step-icon text-green-800">🔔</span>
+                            Notifies Staff & Players
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assign Officials and Coaches Flow -->
+                <div class="mb-12 p-4 rounded-lg bg-custom-light">
+                    <h3 class="text-2xl font-bold text-[#E63946] mb-4 text-center">Assign Officials and Coaches</h3>
+                    <div class="flex flex-col items-center">
+                        <div class="flow-step">
+                            <span class="flow-step-icon">📄</span>
+                            <p class="flow-trigger">After match is scheduled</p>
+                            System Identifies Open Assignments
+                        </div>
+                        <div class="flow-connector"></div>
+                        <div class="flow-step">
+                            <span class="flow-step-icon">🤝</span>
+                            Allocates Umpires, Referees, Staff
+                        </div>
+                        <div class="flow-connector"></div>
+                        <div class="flow-step colored-step">
+                            <span class="flow-step-icon">🔄</span>
+                            Updates Appointee Assignment History & Calendar
+                        </div>
+                        <div class="flow-connector"></div>
+                        <div class="flow-step bg-success">
+                            <span class="flow-step-icon text-green-800">📧</span>
+                            Alerts Appointees to Roles
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Update Match Details Flow -->
+                <div class="p-4 rounded-lg bg-custom-light">
+                    <h3 class="text-2xl font-bold text-[#E63946] mb-4 text-center">Update Match Details</h3>
+                    <div class="flex flex-col items-center">
+                        <div class="flow-step">
+                            <span class="flow-step-icon">✍️</span>
+                            <p class="flow-trigger">Match details change (reschedule/cancel)</p>
+                            User Modifies Match Information
+                        </div>
+                        <div class="flow-connector"></div>
+                        <div class="flow-decision">
+                            System Validates Changes
+                        </div>
+                        <div class="flex w-full justify-center relative my-4">
+                            <div class="flow-split-line-h w-1/2"></div>
+                            <div class="flow-split-line-v h-8 absolute top-0 left-1/4 -translate-x-1/2"></div>
+                            <div class="flow-split-line-v h-8 absolute top-0 right-1/4 translate-x-1/2"></div>
+                            <span class="absolute -top-6 left-1/4 -translate-x-1/2 text-sm font-bold text-green-600">✅ Valid</span>
+                            <span class="absolute -top-6 right-1/4 translate-x-1/2 text-sm font-bold text-red-600">❌ Invalid</span>
+                        </div>
+                        <div class="flex w-full justify-center gap-8">
+                            <div class="flow-split-branch">
+                                <div class="flow-step bg-success">
+                                    <span class="flow-step-icon text-green-700">✅</span>
+                                    System Updates Match Record
+                                </div>
+                                <div class="flow-connector"></div>
+                                <div class="flow-step bg-success">
+                                    <span class="flow-step-icon text-green-800">📣</span>
+                                    Notifies Affected Parties
+                                </div>
+                            </div>
+                            <div class="flow-split-branch">
+                                <div class="flow-step bg-error">
+                                    <span class="flow-step-icon text-red-700">🚫</span>
+                                    Display Error Message
+                                </div>
+                                <div class="return-arrow">
+                                    <div class="line-v"></div>
+                                    <div class="line-h"></div>
+                                    <span class="arrow-head">↩</span>
+                                </div>
+                                <p class="text-sm text-gray-500 -mt-4">Returns to "Modifies Information"</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+
+        </main>
+
+        <footer class="text-center mt-12 md:mt-16 pt-8 border-t-2 border-[#A8DADC]">
+            <p class="text-lg text-[#1D3557]">Centralized match scheduling for seamless coordination and event management.</p>
+        </footer>
+
+    </div>
+
+</body>
+</html>
